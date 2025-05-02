@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Card, { CardProps } from './components/Card';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState<string | null>(null);
+  const [cards, setCards] = useState<CardProps[]>([]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -13,16 +14,22 @@ export default function Home() {
     setInput(''); // Clear input immediately
 
     // TODO: Replace this with real agent call
-    const agentReply = await fakeAgentCall(messageToSend);
+    const cards = await fakeAgentCall(messageToSend);
 
-    setResponse(agentReply);
+    setCards(cards);
   };
 
   // Fake agent for demo purposes
-  const fakeAgentCall = async (msg: string): Promise<string> => {
+  const fakeAgentCall = async (msg: string): Promise<CardProps[]> => {
     return new Promise((res) =>
-      setTimeout(() => res(`Echo: ${msg}`), 1000)
-    );
+      setTimeout(() => {
+        res([
+          { type: 'action', content: `Response to "${msg}"` },
+          { type: 'action', content: `Another response to "${msg}"` },
+          { type: 'action', content: `Yet another response to "${msg}"` },
+        ]);
+      }, 1000
+    ));
   };
 
   return (
@@ -34,13 +41,13 @@ export default function Home() {
       </header>
 
 
-      {/* Display response */}
-      <div className="flex-1 overflow-y-auto py-3 text-base">
-        {response && (
-          <div className="bg-gray-200 px-4 py-3 rounded-lg max-w-xl mx-auto mb-4 text-center">
-            {response}
-          </div>
-        )}
+      {/* Horizontal action card row */}
+      <div className="px-4 pb-3">
+        <div className="flex gap-4 overflow-x-auto">
+          {cards.map((card, index) => (
+            <Card key={index} type={card.type} content={card.content} />
+          ))}
+        </div>
       </div>
 
       {/* Input box */}
