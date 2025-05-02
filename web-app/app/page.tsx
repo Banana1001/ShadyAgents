@@ -1,10 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import Timeline from './components/Timeline';
+
+interface Project {
+  id: string;
+  name: string;
+  createdAt: Date;
+}
 
 export default function Home() {
   const [input, setInput] = useState('');
   const [response, setResponse] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([
+    { id: '1', name: 'Project Alpha', createdAt: new Date() },
+    { id: '2', name: 'Project Beta', createdAt: new Date() },
+    { id: '3', name: 'Project Gamma', createdAt: new Date() },
+  ]);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -25,39 +41,162 @@ export default function Home() {
     );
   };
 
+  const handleCreateProject = () => {
+    if (newProjectName.trim()) {
+      const newProject: Project = {
+        id: Date.now().toString(),
+        name: newProjectName.trim(),
+        createdAt: new Date(),
+      };
+      setProjects([...projects, newProject]);
+      setSelectedProject(newProject.id);
+      setNewProjectName('');
+      setIsCreatingProject(false);
+    }
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects(projects.filter(p => p.id !== projectId));
+    if (selectedProject === projectId) {
+      setSelectedProject(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
+      {/* Left Sidebar */}
+      <div 
+        className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-800 text-white flex flex-col transition-all duration-300 ease-in-out`}
+      >
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          {!isSidebarCollapsed && <h2 className="text-xl font-semibold">Projects</h2>}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-1 hover:bg-gray-700 rounded"
+          >
+            {isSidebarCollapsed ? '→' : '←'}
+          </button>
+        </div>
+        
+        {/* New Project Button */}
+        {!isSidebarCollapsed && (
+          <button 
+            className="m-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center gap-2"
+            onClick={() => setIsCreatingProject(true)}
+          >
+            <span>+</span> New Project
+          </button>
+        )}
 
-      {/* Title */}
-      <header className="text-3xl font-bold text-gray-800 mt-4 ml-6">
-        Planner App
-      </header>
-
-
-      {/* Display response */}
-      <div className="flex-1 overflow-y-auto py-3 text-base">
-        {response && (
-          <div className="bg-gray-200 px-4 py-3 rounded-lg max-w-xl mx-auto mb-4 text-center">
-            {response}
+        {/* Project Creation Modal */}
+        {isCreatingProject && !isSidebarCollapsed && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Create New Project</h3>
+              <input
+                type="text"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="Project Name"
+                className="w-full p-2 border rounded mb-4 text-gray-800"
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsCreatingProject(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateProject}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Project List */}
+        <div className="flex-1 overflow-y-auto">
+          {!isSidebarCollapsed && (
+            <div className="px-4 py-2">
+              <div className="text-sm text-gray-400 mb-2">Recent Projects</div>
+              {projects.map((project) => (
+                <div 
+                  key={project.id}
+                  className="group relative"
+                >
+                  <div 
+                    className={`p-2 rounded-md cursor-pointer hover:bg-gray-700 ${selectedProject === project.id ? 'bg-gray-700' : ''}`}
+                    onClick={() => setSelectedProject(project.id)}
+                  >
+                    {project.name}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteProject(project.id)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Input box */}
-      <div className="p-3 flex gap-2 px-10">
-        <input
-          className="flex-1 border rounded-md px-3 py-2 text-sm outline-none"
-          placeholder="Type your message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
-          onClick={sendMessage}
-        >
-          Send
-        </button>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Title */}
+        <header className="text-3xl font-bold text-gray-800 mt-4 ml-6">
+          {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'Planner App'}
+        </header>
+
+        {/* Main content area with timeline and canvases */}
+        <div className="flex-1 flex flex-col">
+          {/* Top canvas area */}
+          <div className="flex-1 bg-white border-b border-gray-200">
+          </div>
+
+          {/* Timeline axis */}
+          <Timeline />
+
+          {/* Bottom canvas area */}
+          <div className="flex-1 bg-white border-t border-gray-200">
+          </div>
+        </div>
+
+        {/* Chat section */}
+        <div className="border-t border-gray-200">
+          {/* Display response */}
+          <div className="overflow-y-auto py-3 text-base">
+            {response && (
+              <div className="bg-gray-200 text-black px-4 py-3 rounded-lg max-w-xl mx-auto mb-4 text-center">
+                {response}
+              </div>
+            )}
+          </div>
+
+          {/* Input box */}
+          <div className="p-3 flex gap-2 px-10">
+            <input
+              className="flex-1 border text-black rounded-md px-3 py-2 text-sm outline-none"
+              placeholder="Type your message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            />
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+              onClick={sendMessage}
+            >
+              Send
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
