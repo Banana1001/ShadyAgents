@@ -27,8 +27,15 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
+
+      {/* Title */}
+      <header className="text-3xl font-bold text-gray-800 mt-4 ml-6">
+        Planner App
+      </header>
+
+
       {/* Display response */}
-      <div className="flex-1 overflow-y-auto p-4 text-sm">
+      <div className="flex-1 overflow-y-auto py-3 text-base">
         {response && (
           <div className="bg-gray-200 px-4 py-3 rounded-lg max-w-xl mx-auto mb-4 text-center">
             {response}
