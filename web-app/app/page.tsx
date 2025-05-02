@@ -155,48 +155,96 @@ export default function Home() {
           {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'Planner App'}
         </header>
 
-        {/* Main content area with timeline and canvases */}
-        <div className="flex-1 flex flex-col">
-          {/* Top canvas area */}
-          <div className="flex-1 bg-white border-b border-gray-200">
-          </div>
-
-          {/* Timeline axis */}
-          <Timeline />
-
-          {/* Bottom canvas area */}
-          <div className="flex-1 bg-white border-t border-gray-200">
-          </div>
-        </div>
-
-        {/* Chat section */}
-        <div className="border-t border-gray-200">
-          {/* Display response */}
-          <div className="overflow-y-auto py-3 text-base">
-            {response && (
-              <div className="bg-gray-200 text-black px-4 py-3 rounded-lg max-w-xl mx-auto mb-4 text-center">
-                {response}
+        {selectedProject ? (
+          // Project View
+          <>
+            {/* Main content area with timeline and canvases */}
+            <div className="flex-1 flex flex-col">
+              {/* Top canvas area */}
+              <div className="flex-1 bg-white border-b border-gray-200">
               </div>
-            )}
-          </div>
 
-          {/* Input box */}
-          <div className="p-3 flex gap-2 px-10">
-            <input
-              className="flex-1 border text-black rounded-md px-3 py-2 text-sm outline-none"
-              placeholder="Type your message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            />
-            <button
-              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
-              onClick={sendMessage}
-            >
-              Send
-            </button>
+              {/* Timeline axis */}
+              <Timeline />
+
+              {/* Bottom canvas area */}
+              <div className="flex-1 bg-white border-t border-gray-200">
+              </div>
+            </div>
+
+            {/* Chat section */}
+            <div className="border-t border-gray-200">
+              {/* Display response */}
+              <div className="overflow-y-auto py-3 text-base">
+                {response && (
+                  <div className="bg-gray-200 text-black px-4 py-3 rounded-lg max-w-xl mx-auto mb-4 text-center">
+                    {response}
+                  </div>
+                )}
+              </div>
+
+              {/* Input box */}
+              <div className="p-3 flex gap-2 px-10">
+                <input
+                  className="flex-1 border text-black rounded-md px-3 py-2 text-sm outline-none"
+                  placeholder="Type your message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                />
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+                  onClick={sendMessage}
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          // Landing Page
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="max-w-2xl w-full text-center">
+              <h1 className="text-4xl font-bold text-gray-800 mb-6">
+                Welcome to Planner App
+              </h1>
+              <p className="text-gray-600 mb-8 text-lg">
+                Create a new project or select an existing one to get started with your planning journey.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Create New Project Card */}
+                <div 
+                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-dashed border-gray-300 hover:border-blue-500"
+                  onClick={() => setIsCreatingProject(true)}
+                >
+                  <div className="text-4xl mb-4 text-blue-500">+</div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Create New Project</h3>
+                  <p className="text-gray-600">Start fresh with a new planning project</p>
+                </div>
+
+                {/* Recent Projects Card */}
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Projects</h3>
+                  <div className="space-y-3">
+                    {projects.slice(0, 3).map((project) => (
+                      <div
+                        key={project.id}
+                        className="p-3 rounded-md hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                        onClick={() => setSelectedProject(project.id)}
+                      >
+                        <span className="text-gray-800">{project.name}</span>
+                        <span className="text-gray-400 text-sm">
+                          {project.createdAt.toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
