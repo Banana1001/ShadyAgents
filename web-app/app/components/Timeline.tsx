@@ -49,10 +49,6 @@ export default function Timeline({
         </div>
       ))}
 
-      {/* Center marker */}
-      <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
-      </div>
 
       {/* Glow effect */}
       <div 
