@@ -44,7 +44,7 @@ export default function Home() {
       </div>
 
       {/* Input box */}
-      <div className="p-3 border-t flex gap-2 bg-white px-10">
+      <div className="p-3 flex gap-2 px-10">
         <input
           className="flex-1 border rounded-md px-3 py-2 text-sm outline-none"
           placeholder="Type your message..."
