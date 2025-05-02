@@ -3,10 +3,41 @@
 import { useState } from 'react';
 import Timeline from './components/Timeline';
 
+// Example timeline configurations
+const timelineConfigs = {
+  hours: {
+    ticks: Array.from({ length: 24 }, (_, i) => ({
+      position: i / 23,
+      label: i % 6 === 0 ? `${i}:00` : undefined,
+      isMajor: i % 6 === 0
+    }))
+  },
+  days: {
+    ticks: Array.from({ length: 7 }, (_, i) => ({
+      position: i / 6,
+      label: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
+      isMajor: true
+    }))
+  },
+  months: {
+    ticks: Array.from({ length: 12 }, (_, i) => ({
+      position: i / 11,
+      label: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
+      isMajor: true
+    }))
+  }
+};
+
 interface Project {
   id: string;
   name: string;
   createdAt: Date;
+  timelineType: 'hours' | 'days' | 'months' | 'custom';
+  customTicks?: Array<{
+    position: number;
+    label?: string;
+    isMajor?: boolean;
+  }>;
 }
 
 export default function Home() {
@@ -15,12 +46,29 @@ export default function Home() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [projects, setProjects] = useState<Project[]>([
-    { id: '1', name: 'Project Alpha', createdAt: new Date() },
-    { id: '2', name: 'Project Beta', createdAt: new Date() },
-    { id: '3', name: 'Project Gamma', createdAt: new Date() },
+    { 
+      id: '1', 
+      name: 'Project Alpha', 
+      createdAt: new Date(),
+      timelineType: 'hours'
+    },
+    { 
+      id: '2', 
+      name: 'Project Beta', 
+      createdAt: new Date(),
+      timelineType: 'days'
+    },
+    { 
+      id: '3', 
+      name: 'Project Gamma', 
+      createdAt: new Date(),
+      timelineType: 'months'
+    },
   ]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectTimelineType, setNewProjectTimelineType] = useState<'hours' | 'days' | 'months' | 'custom'>('hours');
+  const [customTicks, setCustomTicks] = useState<Array<{ position: number; label?: string; isMajor?: boolean }>>([]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -47,10 +95,14 @@ export default function Home() {
         id: Date.now().toString(),
         name: newProjectName.trim(),
         createdAt: new Date(),
+        timelineType: newProjectTimelineType,
+        ...(newProjectTimelineType === 'custom' && { customTicks })
       };
       setProjects([...projects, newProject]);
       setSelectedProject(newProject.id);
       setNewProjectName('');
+      setNewProjectTimelineType('hours');
+      setCustomTicks([]);
       setIsCreatingProject(false);
     }
   };
@@ -60,6 +112,23 @@ export default function Home() {
     if (selectedProject === projectId) {
       setSelectedProject(null);
     }
+  };
+
+  // Get timeline configuration based on selected project
+  const getTimelineConfig = () => {
+    if (!selectedProject) return { ticks: [] };
+    const project = projects.find(p => p.id === selectedProject);
+    if (!project) return { ticks: [] };
+
+    if (project.timelineType === 'custom' && project.customTicks) {
+      return { ticks: project.customTicks };
+    }
+
+    if (project.timelineType in timelineConfigs) {
+      return timelineConfigs[project.timelineType as keyof typeof timelineConfigs];
+    }
+
+    return { ticks: [] };
   };
 
   return (
@@ -99,8 +168,81 @@ export default function Home() {
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder="Project Name"
                 className="w-full p-2 border rounded mb-4 text-gray-800"
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
               />
+              
+              {/* Timeline Type Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Timeline Type
+                </label>
+                <select
+                  value={newProjectTimelineType}
+                  onChange={(e) => setNewProjectTimelineType(e.target.value as any)}
+                  className="w-full p-2 border rounded text-gray-800"
+                >
+                  <option value="hours">Hours (24-hour)</option>
+                  <option value="days">Days of Week</option>
+                  <option value="months">Months</option>
+                  <option value="custom">Custom Timeline</option>
+                </select>
+              </div>
+
+              {/* Custom Timeline Configuration */}
+              {newProjectTimelineType === 'custom' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Timeline Points
+                  </label>
+                  <div className="space-y-2">
+                    {customTicks.map((tick, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="number"
+                          value={tick.position}
+                          onChange={(e) => {
+                            const newTicks = [...customTicks];
+                            newTicks[index].position = parseFloat(e.target.value);
+                            setCustomTicks(newTicks);
+                          }}
+                          placeholder="Position (0-1)"
+                          className="w-24 p-2 border rounded text-gray-800"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                        />
+                        <input
+                          type="text"
+                          value={tick.label || ''}
+                          onChange={(e) => {
+                            const newTicks = [...customTicks];
+                            newTicks[index].label = e.target.value;
+                            setCustomTicks(newTicks);
+                          }}
+                          placeholder="Label"
+                          className="flex-1 p-2 border rounded text-gray-800"
+                        />
+                        <button
+                          onClick={() => {
+                            setCustomTicks(customTicks.filter((_, i) => i !== index));
+                          }}
+                          className="px-2 text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setCustomTicks([...customTicks, { position: 0, label: '', isMajor: true }]);
+                      }}
+                      className="text-blue-500 hover:text-blue-700 text-sm"
+                    >
+                      + Add Point
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setIsCreatingProject(false)}
@@ -156,7 +298,6 @@ export default function Home() {
         </header>
 
         {selectedProject ? (
-          // Project View
           <>
             {/* Main content area with timeline and canvases */}
             <div className="flex-1 flex flex-col">
@@ -165,7 +306,11 @@ export default function Home() {
               </div>
 
               {/* Timeline axis */}
-              <Timeline />
+              <Timeline 
+                {...getTimelineConfig()}
+                leftMargin={60}
+                rightMargin={60}
+              />
 
               {/* Bottom canvas area */}
               <div className="flex-1 bg-white border-t border-gray-200">
