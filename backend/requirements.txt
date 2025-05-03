@@ -1,2 +1,8 @@
-fastapi
-uvicorn
+fastapi>=0.115.12
+uvicorn>=0.34.2
+langgraph>=0.0.16
+langchain>=0.0.335
+langchain_openai>=0.0.2
+langchain_experimental>=0.0.47
+tavily-python>=0.2.2
+python-dotenv>=1.0.0
