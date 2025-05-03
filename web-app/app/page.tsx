@@ -69,6 +69,34 @@ interface PlacedCard extends CardProps {
   combinedCards?: string[]; // Track IDs of cards that were combined
 }
 
+// Add this function at the top level, before the Home component
+const generateICS = (events: TimelineEvent[], projectName: string) => {
+  const icsEvents = events.map(event => {
+    const startDate = new Date(event.time);
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour duration by default
+    
+    return [
+      'BEGIN:VEVENT',
+      `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `SUMMARY:${event.content.split('\n')[0]}`,
+      `DESCRIPTION:${event.content.replace(/\n/g, '\\n')}`,
+      'END:VEVENT'
+    ].join('\r\n');
+  }).join('\r\n');
+
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//PlanCrafter//EN',
+    `X-WR-CALNAME:${projectName}`,
+    icsEvents,
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  return icsContent;
+};
+
 export default function Home() {
   const [input, setInput] = useState('');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
@@ -538,6 +566,22 @@ export default function Home() {
 
   const { cards, placedCards } = getCurrentProjectCards();
 
+  const handleExportCalendar = () => {
+    if (!selectedProject) return;
+    
+    const project = projects.find(p => p.id === selectedProject);
+    if (!project) return;
+
+    const icsContent = generateICS(project.timelineEvents, project.name);
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${project.name.toLowerCase().replace(/\s+/g, '-')}-calendar.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left Sidebar */}
@@ -699,10 +743,23 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Title */}
-        <header className="text-3xl font-bold text-gray-800 mt-4 ml-6">
-          {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'PlanCrafter'}
-        </header>
+        {/* Title and Export Button */}
+        <div className="flex items-center justify-between mt-4 mx-6">
+          <header className="text-3xl font-bold text-gray-800">
+            {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'PlanCrafter'}
+          </header>
+          {selectedProject && (
+            <button
+              onClick={handleExportCalendar}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+              Export Calendar
+            </button>
+          )}
+        </div>
 
         {selectedProject ? (
           <>
