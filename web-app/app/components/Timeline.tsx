@@ -32,6 +32,12 @@ interface TimelineProps {
   leftMargin?: number;
   rightMargin?: number;
   onEventDrop?: (eventId: string, card: { type: 'action' | 'idea' | 'combine', content: string }) => void;
+  dragOverTarget?: {
+    type: 'card' | 'event' | 'timeline' | null;
+    id?: string;
+  };
+  onEventDragOver?: (e: React.DragEvent, eventId: string) => void;
+  onEventDragLeave?: () => void;
 }
 
 export default function Timeline({ 
@@ -40,7 +46,10 @@ export default function Timeline({
   events = [],
   leftMargin = 40,
   rightMargin = 40,
-  onEventDrop
+  onEventDrop,
+  dragOverTarget,
+  onEventDragOver,
+  onEventDragLeave
 }: TimelineProps) {
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
 
@@ -128,13 +137,28 @@ export default function Timeline({
           <div 
             className={`bg-white shadow-md rounded-lg w-[320px] ${
               event.placement === 'above' ? '-mt-20' : 'mt-32'
-            } transition-all hover:shadow-lg overflow-hidden`}
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, event.id)}
+            } transition-all duration-200 hover:shadow-xl hover:scale-105 overflow-hidden ${
+              dragOverTarget?.type === 'event' && dragOverTarget?.id === event.id ? 'ring-4 ring-green-500 scale-105' : ''
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEventDragOver?.(e, event.id);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEventDragLeave?.();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDrop(e, event.id);
+            }}
           >
             {/* Event header */}
             <div 
-              className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50/80 transition-colors"
               onClick={() => toggleEvent(event.id)}
             >
               <div className="flex items-center gap-2">
