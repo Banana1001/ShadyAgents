@@ -93,6 +93,11 @@ export default function Home() {
   const COMBINE_DISTANCE = 50; // Distance in pixels to trigger combination
   const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
 
+  const [dragOverTarget, setDragOverTarget] = useState<{
+    type: 'card' | 'event' | 'timeline' | null;
+    id?: string;
+  }>({ type: null });
+
   const sendMessage = async () => {
     if (!input.trim() || !selectedProject) return;
 
@@ -247,6 +252,7 @@ export default function Home() {
 
   const handleDragEnd = () => {
     setDraggedCard(null);
+    setDragOverTarget({ type: null });
   };
 
   const canCombineCards = (card1: PlacedCard, card2: PlacedCard) => {
@@ -284,26 +290,72 @@ export default function Home() {
     }
   };
 
-  const handleEventDrop = (eventId: string, card: { type: 'action' | 'idea' | 'combine', content: string }) => {
+  const handleEventDrop = async (eventId: string, card: { type: 'action' | 'idea' | 'combine', content: string }) => {
     if (!selectedProject) return;
 
-    setProjects(prevProjects => 
-      prevProjects.map(project => 
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
+    // Get new action cards from the agent
+    const newCards = await fakeCombineCard(`Combine ${currentProject.timelineEvents.find(e => e.id === eventId)?.content} and ${card.content}`);
+    
+    const returnedCard = newCards[0];
+
+    // Step 1: Replace the existing event with the new one
+    const newEvent: TimelineEvent = {
+      id: eventId,
+      time: returnedCard.time,
+      content: returnedCard.content,
+      type: returnedCard.type as 'combine' | 'idea' | 'action',
+      placement: currentProject.timelineEvents.find(e => e.id === eventId)?.placement || 'above',
+      cards: [returnedCard],
+      position: 0 // temporary, will be recalculated
+    };
+
+    // Step 2: Build a list of all events with the new one in place
+    const updatedEventsUnpositioned = currentProject.timelineEvents.map(event =>
+      event.id === eventId ? newEvent : event
+    );
+
+    // Step 3: Recalculate time-based positions
+    const allCardsWithTime = updatedEventsUnpositioned
+      .map(e => e.cards[0])
+      .filter(c => (c.type === 'idea' || c.type === 'combine') && !!c.time);
+
+    const times = allCardsWithTime.map(c => new Date(c.time!).getTime());
+    const minTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+    const timeRange = maxTime - minTime || 1;
+
+    const updatedEvents = updatedEventsUnpositioned.map(event => {
+      const time = event.cards[0]?.time;
+      if (!time) return event;
+      const cardTime = new Date(time).getTime();
+      return {
+        ...event,
+        position: (cardTime - minTime) / timeRange
+      };
+    });
+
+    // Step 4: Update state
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
         project.id === selectedProject
           ? {
-              ...project,
-              timelineEvents: project.timelineEvents.map(event => 
-                event.id === eventId
-                  ? {
-                      ...event,
-                      cards: [...event.cards, { ...card, id: Date.now().toString() }]
-                    }
-                  : event
-              )
-            }
+            ...project,
+            timelineEvents: updatedEvents,
+            cards: [],
+            placedCards: project.placedCards.filter(c => c.id !== draggedPlacedCardId),
+          }
           : project
       )
     );
+
+    // Clear drag states
+    setDraggedCard(null);
+    setDraggedPlacedCardId(null);
+    setIsDraggingPlacedCard(false);
+    setDragOverTarget({ type: null });
   };
 
   const handleAxisDrop = async (e: React.DragEvent) => {
@@ -488,21 +540,35 @@ export default function Home() {
     setDraggedCard(null);
   };
 
-  const handlePlacedCardDragStart = (e: React.DragEvent, cardId: string) => {
+  const handlePlacedCardDragStart = (e: React.DragEvent<HTMLDivElement>, cardId: string) => {
     setIsDraggingPlacedCard(true);
     setDraggedPlacedCardId(cardId);
-    // Set a custom drag image to make it look better
+    
+    // Create a custom drag image
     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
+    dragImage.style.width = '250px'; // Match the card width
     document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    
+    // Set the drag image offset to be at the cursor position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    e.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+    
+    // Hide the original card
+    e.currentTarget.style.opacity = '0';
+    
     setTimeout(() => document.body.removeChild(dragImage), 0);
   };
 
-  const handlePlacedCardDragEnd = () => {
+  const handlePlacedCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     setIsDraggingPlacedCard(false);
     setDraggedPlacedCardId(null);
+    setDragOverTarget({ type: null });
+    // Restore the original card's opacity
+    e.currentTarget.style.opacity = '1';
   };
 
   const handlePlacedCardDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
@@ -665,6 +731,25 @@ export default function Home() {
       }
     };
   }, []);
+
+  const handleCardDragOver = (e: React.DragEvent, cardId: string) => {
+    e.preventDefault();
+    setDragOverTarget({ type: 'card', id: cardId });
+  };
+
+  const handleEventDragOver = (e: React.DragEvent, eventId: string) => {
+    e.preventDefault();
+    setDragOverTarget({ type: 'event', id: eventId });
+  };
+
+  const handleTimelineDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverTarget({ type: 'timeline' });
+  };
+
+  const handleDragLeave = () => {
+    setDragOverTarget({ type: null });
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -885,9 +970,13 @@ export default function Home() {
                       onMouseDown={() => handleCardMouseDown(card.id)}
                       onMouseUp={handleCardMouseUp}
                       onMouseLeave={handleCardMouseUp}
+                      onDragOver={(e) => handleCardDragOver(e, card.id)}
+                      onDragLeave={handleDragLeave}
                       className={`absolute cursor-move transition-all duration-200 ${
                         draggedPlacedCardId === card.id ? 'opacity-50 scale-95' : 'hover:scale-105'
-                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
+                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''} ${
+                        dragOverTarget.type === 'card' && dragOverTarget.id === card.id ? 'ring-4 ring-green-500 scale-105' : ''
+                      }`}
                       style={{
                         left: card.position.x,
                         top: card.position.y,
@@ -906,18 +995,26 @@ export default function Home() {
 
               {/* Timeline axis with drop zone */}
               <div 
-                className="relative mx-6 my-4 rounded-2xl border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-lg z-50"
-                onDragOver={handleDragOver}
+                className={`relative mx-6 my-4 rounded-2xl border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-lg z-50 transition-all duration-200 ${
+                  dragOverTarget.type === 'timeline' ? 'ring-4 ring-green-500 scale-105' : ''
+                }`}
+                onDragOver={handleTimelineDragOver}
+                onDragLeave={handleDragLeave}
                 onDrop={handleAxisDrop}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 opacity-0 hover:opacity-100 transition-opacity pointer-events-none rounded-2xl" />
-                <Timeline 
-                  {...getTimelineConfig()}
-                  leftMargin={60}
-                  rightMargin={60}
-                  events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
-                  onEventDrop={handleEventDrop}
-                />
+                <div className="relative">
+                  <Timeline 
+                    {...getTimelineConfig()}
+                    leftMargin={60}
+                    rightMargin={60}
+                    events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
+                    onEventDrop={handleEventDrop}
+                    dragOverTarget={dragOverTarget}
+                    onEventDragOver={handleEventDragOver}
+                    onEventDragLeave={handleDragLeave}
+                  />
+                </div>
               </div>
 
               {/* Bottom canvas area */}
@@ -937,9 +1034,13 @@ export default function Home() {
                       onMouseDown={() => handleCardMouseDown(card.id)}
                       onMouseUp={handleCardMouseUp}
                       onMouseLeave={handleCardMouseUp}
+                      onDragOver={(e) => handleCardDragOver(e, card.id)}
+                      onDragLeave={handleDragLeave}
                       className={`absolute cursor-move transition-all duration-200 ${
                         draggedPlacedCardId === card.id ? 'opacity-50 scale-95' : 'hover:scale-105'
-                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
+                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''} ${
+                        dragOverTarget.type === 'card' && dragOverTarget.id === card.id ? 'ring-4 ring-green-500 scale-105' : ''
+                      }`}
                       style={{
                         left: card.position.x,
                         top: card.position.y,
