@@ -280,6 +280,20 @@ export default function Home() {
     ));
   };
 
+  // Fake server call for demo purposes
+  const fakeServerCall = async(msg: string) => {
+    const res = await fetch('http://localhost:8000/generate-plan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: msg }),
+    });
+
+    const data = await res.json();
+    return (data.cards);
+  };
+
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
       const newProject: Project = {
