@@ -171,26 +171,6 @@ export default function Timeline({
                   Cost: {new String(event.cost).toLocaleString()}
                 </div>
                 
-                {/* Event cards */}
-                {event.cards && event.cards.length > 0 && (
-                  <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
-                    {event.cards.map((card) => (
-                      <div 
-                        key={card.id}
-                        className="bg-gray-50 rounded p-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="prose prose-sm max-w-none">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                          >
-                            {card.content}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </div>
