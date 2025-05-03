@@ -564,110 +564,6 @@ export default function Home() {
           </button>
         )}
 
-        {/* Project Creation Modal */}
-        {isCreatingProject && !isSidebarCollapsed && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">Create New Project</h3>
-              <input
-                type="text"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="Project Name"
-                className="w-full p-2 border rounded mb-4 text-gray-800"
-              />
-              
-              {/* Timeline Type Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Timeline Type
-                </label>
-                <select
-                  value={newProjectTimelineType}
-                  onChange={(e) => setNewProjectTimelineType(e.target.value as any)}
-                  className="w-full p-2 border rounded text-gray-800"
-                >
-                  <option value="hours">Hours (24-hour)</option>
-                  <option value="days">Days of Week</option>
-                  <option value="months">Months</option>
-                  <option value="custom">Custom Timeline</option>
-                </select>
-              </div>
-
-              {/* Custom Timeline Configuration */}
-              {newProjectTimelineType === 'custom' && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Timeline Points
-                  </label>
-                  <div className="space-y-2">
-                    {customTicks.map((tick, index) => (
-                      <div key={index} className="flex gap-2">
-                        <input
-                          type="number"
-                          value={tick.position}
-                          onChange={(e) => {
-                            const newTicks = [...customTicks];
-                            newTicks[index].position = parseFloat(e.target.value);
-                            setCustomTicks(newTicks);
-                          }}
-                          placeholder="Position (0-1)"
-                          className="w-24 p-2 border rounded text-gray-800"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                        />
-                        <input
-                          type="text"
-                          value={tick.label || ''}
-                          onChange={(e) => {
-                            const newTicks = [...customTicks];
-                            newTicks[index].label = e.target.value;
-                            setCustomTicks(newTicks);
-                          }}
-                          placeholder="Label"
-                          className="flex-1 p-2 border rounded text-gray-800"
-                        />
-                        <button
-                          onClick={() => {
-                            setCustomTicks(customTicks.filter((_, i) => i !== index));
-                          }}
-                          className="px-2 text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => {
-                        setCustomTicks([...customTicks, { position: 0, label: '', isMajor: true }]);
-                      }}
-                      className="text-blue-500 hover:text-blue-700 text-sm"
-                    >
-                      + Add Point
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setIsCreatingProject(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateProject}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Create
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Project List */}
         <div className="flex-1 overflow-y-auto">
           {!isSidebarCollapsed && (
@@ -696,6 +592,110 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Project Creation Modal - Moved outside sidebar */}
+      {isCreatingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">Create New Project</h3>
+            <input
+              type="text"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="Project Name"
+              className="w-full p-2 border rounded mb-4 text-gray-800"
+            />
+            
+            {/* Timeline Type Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Timeline Type
+              </label>
+              <select
+                value={newProjectTimelineType}
+                onChange={(e) => setNewProjectTimelineType(e.target.value as any)}
+                className="w-full p-2 border rounded text-gray-800"
+              >
+                <option value="hours">Hours (24-hour)</option>
+                <option value="days">Days of Week</option>
+                <option value="months">Months</option>
+                <option value="custom">Custom Timeline</option>
+              </select>
+            </div>
+
+            {/* Custom Timeline Configuration */}
+            {newProjectTimelineType === 'custom' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Custom Timeline Points
+                </label>
+                <div className="space-y-2">
+                  {customTicks.map((tick, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="number"
+                        value={tick.position}
+                        onChange={(e) => {
+                          const newTicks = [...customTicks];
+                          newTicks[index].position = parseFloat(e.target.value);
+                          setCustomTicks(newTicks);
+                        }}
+                        placeholder="Position (0-1)"
+                        className="w-24 p-2 border rounded text-gray-800"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                      />
+                      <input
+                        type="text"
+                        value={tick.label || ''}
+                        onChange={(e) => {
+                          const newTicks = [...customTicks];
+                          newTicks[index].label = e.target.value;
+                          setCustomTicks(newTicks);
+                        }}
+                        placeholder="Label"
+                        className="flex-1 p-2 border rounded text-gray-800"
+                      />
+                      <button
+                        onClick={() => {
+                          setCustomTicks(customTicks.filter((_, i) => i !== index));
+                        }}
+                        className="px-2 text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      setCustomTicks([...customTicks, { position: 0, label: '', isMajor: true }]);
+                    }}
+                    className="text-blue-500 hover:text-blue-700 text-sm"
+                  >
+                    + Add Point
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsCreatingProject(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProject}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
