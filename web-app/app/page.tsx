@@ -403,7 +403,7 @@ export default function Home() {
           .map((card: CardProps, index: number) => {
             const time = new Date(card.time!).getTime();
             return {
-              id: card.id,
+              id: Date.now().toString() + index,
               position: (time - minTime) / timeRange,
               time: card.time,
               content: card.content,
