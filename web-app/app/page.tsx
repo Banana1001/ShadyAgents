@@ -119,22 +119,6 @@ export default function Home() {
     return (data.cards);
   };
 
-  const saveTimeline = async (timelineEvents: TimelineEvent[]) => {
-    await fetch('/api/saveTimeline', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(timelineEvents),
-    });
-  };
-
-  const saveCards = async (cards: CardProps[]) => {
-    await fetch('/api/saveCards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cards),
-    });
-  };
-
 
 
   const handleCreateProject = () => {
@@ -361,7 +345,6 @@ export default function Home() {
           )
         );
 
-        saveCards(newCards);
       } else {
         // Create a new event
         const newEvent: TimelineEvent = {
@@ -414,8 +397,6 @@ export default function Home() {
               : project
           )
         );
-
-        saveTimeline(newTimelineEvents);
 
       }
 
