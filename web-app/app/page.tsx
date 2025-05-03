@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Timeline from './components/Timeline';
 import Card, {CardProps} from './components/Card';
 import ProjectMenu from './components/ProjectMenu';
@@ -83,6 +83,10 @@ export default function Home() {
   const [draggedCard, setDraggedCard] = useState<CardProps | null>(null);
   const [isDraggingPlacedCard, setIsDraggingPlacedCard] = useState(false);
   const [draggedPlacedCardId, setDraggedPlacedCardId] = useState<string | null>(null);
+  const [heldCardId, setHeldCardId] = useState<string | null>(null);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isDraggingOverTrash, setIsDraggingOverTrash] = useState(false);
+  const TRASH_DELETE_DISTANCE = 100; // Distance in pixels to trigger deletion
 
   const COMBINE_DISTANCE = 50; // Distance in pixels to trigger combination
   const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
@@ -527,6 +531,35 @@ export default function Home() {
     e.preventDefault();
   };
 
+  const handleTrashDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOverTrash(true);
+  };
+
+  const handleTrashDragLeave = () => {
+    setIsDraggingOverTrash(false);
+  };
+
+  const handleTrashDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOverTrash(false);
+    
+    if (!selectedProject || !draggedPlacedCardId) return;
+
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
+            }
+          : project
+      )
+    );
+    setDraggedPlacedCardId(null);
+    setIsDraggingPlacedCard(false);
+  };
+
   // Get current project's cards and placed cards
   const getCurrentProjectCards = () => {
     if (!selectedProject) return { cards: [], placedCards: [] };
@@ -567,6 +600,45 @@ export default function Home() {
       )
     );
   };
+
+  const handleCardMouseDown = (cardId: string) => {
+    holdTimerRef.current = setTimeout(() => {
+      setHeldCardId(cardId);
+    }, 500); // Show trash can after 500ms of holding
+  };
+
+  const handleCardMouseUp = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    setHeldCardId(null);
+  };
+
+  const handleCardDelete = (cardId: string) => {
+    if (!selectedProject) return;
+
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: project.placedCards.filter(card => card.id !== cardId)
+            }
+          : project
+      )
+    );
+    setHeldCardId(null);
+  };
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -744,8 +816,30 @@ export default function Home() {
 
         {selectedProject ? (
           <>
+            {/* Fixed Trash Can */}
+            {isDraggingPlacedCard && (
+              <div 
+                className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-200 ${
+                  isDraggingOverTrash ? 'scale-110' : 'scale-100'
+                }`}
+                onDragOver={handleTrashDragOver}
+                onDragLeave={handleTrashDragLeave}
+                onDrop={handleTrashDrop}
+              >
+                <div className={`p-3 rounded-full shadow-lg ${
+                  isDraggingOverTrash 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-gray-100 text-gray-400'
+                } transition-colors duration-200`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            )}
+
             {/* Main content area with timeline and canvases */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col"> {/* Removed mt-16 since trash can is now conditional */}
               {/* Top canvas area */}
               <div 
                 className="flex-1 bg-white border-gray-200 shadow-inner relative"
@@ -760,6 +854,9 @@ export default function Home() {
                       draggable
                       onDragStart={(e) => handlePlacedCardDragStart(e, card.id)}
                       onDragEnd={handlePlacedCardDragEnd}
+                      onMouseDown={() => handleCardMouseDown(card.id)}
+                      onMouseUp={handleCardMouseUp}
+                      onMouseLeave={handleCardMouseUp}
                       className={`absolute cursor-move transition-shadow ${
                         draggedPlacedCardId === card.id ? 'opacity-50' : 'hover:shadow-lg'
                       } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
@@ -769,9 +866,9 @@ export default function Home() {
                         transform: 'translate(-50%, -50%)'
                       }}
                     >
-                      <Card 
-                        type={card.type} 
-                        content={card.content} 
+                      <Card
+                        type="action"
+                        content={card.content}
                         onDoubleClick={() => handleCardDoubleClick(card, 'top')}
                       />
                     </div>
@@ -808,6 +905,9 @@ export default function Home() {
                       draggable
                       onDragStart={(e) => handlePlacedCardDragStart(e, card.id)}
                       onDragEnd={handlePlacedCardDragEnd}
+                      onMouseDown={() => handleCardMouseDown(card.id)}
+                      onMouseUp={handleCardMouseUp}
+                      onMouseLeave={handleCardMouseUp}
                       className={`absolute cursor-move transition-shadow ${
                         draggedPlacedCardId === card.id ? 'opacity-50' : 'hover:shadow-lg'
                       } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
@@ -817,9 +917,9 @@ export default function Home() {
                         transform: 'translate(-50%, -50%)'
                       }}
                     >
-                      <Card 
-                        type={card.type} 
-                        content={card.content} 
+                      <Card
+                        type="idea"
+                        content={card.content}
                         onDoubleClick={() => handleCardDoubleClick(card, 'bottom')}
                       />
                     </div>
@@ -840,9 +940,9 @@ export default function Home() {
                       onDragEnd={handleDragEnd}
                       className="cursor-move"
                     >
-                      <Card 
-                        type={card.type} 
-                        content={card.content} 
+                      <Card
+                        type="action"
+                        content={card.content}
                         onDoubleClick={() => handleCardDoubleClick(card, 'top')}
                       />
                     </div>
