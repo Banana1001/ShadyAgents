@@ -130,16 +130,28 @@ export default function Home() {
 
   // server call of generating a plan for demo purposes
   const generatePlan = async(input: any) => {
-    const res = await fetch('http://localhost:8000/generate-plan', {
+    const custom_card_id = input;
+    const url = `http://localhost:8000/combine-timeline/${custom_card_id}`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(input),
     });
+    
+    return res;
 
-    const data = await res.json();
-    return data;
+    // const res = await fetch('http://localhost:8000/generate-plan', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(input),
+    // });
+
+    // const data = await res.json();
+    // return data;
   };
 
   // server call of combining cards for demo purposes
@@ -484,16 +496,15 @@ export default function Home() {
         };
         console.log('inputPayload', inputPayload);
 
-        const response = await generatePlan(inputPayload);
-        console.log('Type of response', typeof response);
-        const newCards = response.cards ?? [];
-        // console log the variable type of new Cards
+        const custom_card_id = inputPayload.Card.id;
 
-    
-        console.log('Type of newCards', typeof newCards);
+        const response = await generatePlan(custom_card_id);
+        console.log('Type of response', typeof response);
+        // Parse the response as JSON to get the array of cards
+        const responseData = await response.json();
 
         // Build cardsList
-        const cardsList = newCards.map((card: any) => ({
+        const cardsList = responseData.map((card: any) => ({
           id: card.card_id,
           content: card.content,
           type: card.type,

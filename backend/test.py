@@ -933,16 +933,31 @@ def run_combine_workflow(
         return f"Error during graph execution: {e}"
 
     # --- Post-Workflow Processing ---
-    final_result_message = "Workflow finished without a final message."
+    final_result = None # Initialize result variable
     if final_state and final_state.get('messages'):
         last_message = final_state['messages'][-1]
         print("\n--- Combine Workflow Finished ---")
         if isinstance(last_message, AIMessage):
-            final_result_message = last_message.content
+            final_result_string = last_message.content
+            try:
+                # Attempt to parse the JSON string back into a Python object
+                final_result = json.loads(final_result_string)
+                print("Successfully parsed final JSON string into Python object.")
+            except json.JSONDecodeError as e:
+                print(f"Warning: Could not parse final message content as JSON: {e}")
+                # Decide fallback behavior: return the string or an error/None
+                final_result = f"Error: Failed to parse final JSON - {e}. Original string: {final_result_string}" # Or return None, or the string itself
         else:
-            final_result_message = f"Workflow ended. Last message: {last_message.pretty_repr() if hasattr(last_message, 'pretty_repr') else last_message}"
+            final_result = f"Workflow ended. Last message: {last_message.pretty_repr() if hasattr(last_message, 'pretty_repr') else last_message}"
     else:
         print("\n--- Combine Workflow Finished (No final state message found) ---")
+        final_result = "Workflow finished without a final message." # Or return None
+
+    # ** The post-workflow removal block that was here is REMOVED **
+
+
+    return final_result # <-- Return the parsed object (list/dict) or error/string fallback
+
 
 
     # ** The post-workflow removal block that was here is REMOVED **
