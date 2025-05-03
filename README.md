@@ -6,5 +6,5 @@ Install libraries
 
 Run:
 ```
-uvicorn main:app --reload --port 8000
+uvicorn fast_server:app --reload --port 8000
 ```
