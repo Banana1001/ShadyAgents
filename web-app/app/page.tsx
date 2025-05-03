@@ -102,9 +102,18 @@ export default function Home() {
 
     const messageToSend = input;
     setInput(''); // Clear input immediately
-
+    const res = await fetch('http://localhost:8000/add-custom-card', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: input.trim(),
+      }),
+    });
+    const {card_id} = await res.json();
     const newCard: CardProps = {
-      id: Date.now().toString(),
+      id: card_id,
       type: 'action',
       content: messageToSend,
     };
@@ -130,7 +139,7 @@ export default function Home() {
     });
 
     const data = await res.json();
-    return (data.cards);
+    return data;
   };
 
   // server call of combining cards for demo purposes
@@ -150,6 +159,8 @@ export default function Home() {
   // Update handleCreateProject to save to Firebase
   const handleCreateProject = async () => {
     if (newProjectName.trim() && user) {
+      
+
       const newProject: Project = {
         id: Date.now().toString(),
         name: newProjectName.trim(),
@@ -473,7 +484,9 @@ export default function Home() {
         };
         console.log('inputPayload', inputPayload);
 
-        const newCards = await generatePlan(inputPayload);
+        const response = await generatePlan(inputPayload);
+        const newCards = response.cards;
+        console.log('newCards', newCards);
 
         // Replace all previous timeline events
         const allTimes = newCards
