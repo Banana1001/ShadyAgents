@@ -5,31 +5,7 @@ import Timeline from './components/Timeline';
 import Card, {CardProps} from './components/Card';
 import ProjectMenu from './components/ProjectMenu';
 
-// Example timeline configurations
-const timelineConfigs = {
-  hours: {
-    ticks: Array.from({ length: 24 }, (_, i) => ({
-      position: i / 23,
-      label: i % 6 === 0 ? `${i}:00` : undefined,
-      isMajor: i % 6 === 0
-    }))
-  },
-  days: {
-    ticks: Array.from({ length: 7 }, (_, i) => ({
-      position: i / 6,
-      label: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
-      isMajor: true
-    }))
-  },
-  months: {
-    ticks: Array.from({ length: 12 }, (_, i) => ({
-      position: i / 11,
-      label: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
-      isMajor: true
-    }))
-  }
-};
-
+// Remove unused timeline configurations
 interface TimelineEvent {
   id: string;
   position: number;
@@ -49,12 +25,7 @@ interface Project {
   id: string;
   name: string;
   createdAt: Date;
-  timelineType: 'hours' | 'days' | 'months' | 'custom';
-  customTicks?: Array<{
-    position: number;
-    label?: string;
-    isMajor?: boolean;
-  }>;
+  description: string;
   cards: CardProps[];
   placedCards: PlacedCard[];
   timelineEvents: TimelineEvent[];
@@ -78,7 +49,7 @@ export default function Home() {
  
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectTimelineType, setNewProjectTimelineType] = useState<'hours' | 'days' | 'months' | 'custom'>('hours');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
   const [customTicks, setCustomTicks] = useState<Array<{ position: number; label?: string; isMajor?: boolean }>>([]);
   const [draggedCard, setDraggedCard] = useState<CardProps | null>(null);
   const [isDraggingPlacedCard, setIsDraggingPlacedCard] = useState(false);
@@ -152,8 +123,7 @@ export default function Home() {
         id: Date.now().toString(),
         name: newProjectName.trim(),
         createdAt: new Date(),
-        timelineType: newProjectTimelineType,
-        ...(newProjectTimelineType === 'custom' && { customTicks }),
+        description: newProjectDescription.trim(),
         cards: [],
         placedCards: [],
         timelineEvents: []
@@ -161,7 +131,7 @@ export default function Home() {
       setProjects([...projects, newProject]);
       setSelectedProject(newProject.id);
       setNewProjectName('');
-      setNewProjectTimelineType('hours');
+      setNewProjectDescription('');
       setCustomTicks([]);
       setIsCreatingProject(false);
     }
@@ -176,52 +146,10 @@ export default function Home() {
 
   // Get timeline configuration based on selected project
   const getTimelineConfig = () => {
-    if (!selectedProject) return { ticks: [] };
-    const project = projects.find(p => p.id === selectedProject);
-    if (!project) return { ticks: [] };
-
-    const cardsWithTime: CardProps[] = [
-      ...project.cards,
-      ...project.placedCards,
-      ...project.timelineEvents.flatMap(event => event.cards),
-    ].filter((card): card is CardProps =>
-      (card.type === 'idea' || card.type === 'combine') && !!card.time
-    );
-
-    if (cardsWithTime.length < 2) return { ticks: [] };
-
-    const times = cardsWithTime.map(card => new Date(card.time!).getTime());
-    const minTime = Math.min(...times);
-    const maxTime = Math.max(...times);
-    const diffMs = maxTime - minTime;
-
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const ONE_MONTH = 30 * ONE_DAY;
-    const ONE_YEAR = 365 * ONE_DAY;
-
-    // Decide format based on time difference
-    let formatFn: (date: Date) => string;
-    if (diffMs > ONE_YEAR) {
-      formatFn = (date) => date.getFullYear().toString();
-    } else if (diffMs > ONE_MONTH) {
-      formatFn = (date) => date.toLocaleDateString(); // e.g. "Apr 20, 2025"
-    } else if (diffMs > ONE_DAY) {
-      formatFn = (date) => `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } else {
-      formatFn = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-
-    const numTicks = 5;
-    const ticks = Array.from({ length: numTicks }, (_, i) => {
-      const time = minTime + ((maxTime - minTime) * i) / (numTicks - 1);
-      return {
-        position: i / (numTicks - 1),
-        label: formatFn(new Date(time)),
-        isMajor: i === 0 || i === numTicks - 1,
-      };
-    });
-
-    return { ticks };
+    return {
+      leftMargin: 60,
+      rightMargin: 60
+    };
   };
 
 
@@ -784,90 +712,22 @@ export default function Home() {
 
       {/* Project Creation Modal - Moved outside sidebar */}
       {isCreatingProject && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
           <div className="bg-white p-8 rounded-2xl w-96 shadow-2xl transform transition-all duration-300 scale-100">
-            <h3 className="text-2xl font-semibold mb-6 text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Create New Project</h3>
+            <h3 className="text-2xl font-semibold mb-6 text-black">Create New Project</h3>
             <input
               type="text"
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
               placeholder="Project Name"
-              className="w-full p-3 border border-gray-200 rounded-lg mb-4 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-2 mb-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black"
             />
-            
-            {/* Timeline Type Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Timeline Type
-              </label>
-              <select
-                value={newProjectTimelineType}
-                onChange={(e) => setNewProjectTimelineType(e.target.value as any)}
-                className="w-full p-3 border border-gray-200 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              >
-                <option value="hours">Hours (24-hour)</option>
-                <option value="days">Days of Week</option>
-                <option value="months">Months</option>
-                <option value="custom">Custom Timeline</option>
-              </select>
-            </div>
-
-            {/* Custom Timeline Configuration */}
-            {newProjectTimelineType === 'custom' && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Custom Timeline Points
-                </label>
-                <div className="space-y-3">
-                  {customTicks.map((tick, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="number"
-                        value={tick.position}
-                        onChange={(e) => {
-                          const newTicks = [...customTicks];
-                          newTicks[index].position = parseFloat(e.target.value);
-                          setCustomTicks(newTicks);
-                        }}
-                        placeholder="Position (0-1)"
-                        className="w-24 p-2 border border-gray-200 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                      />
-                      <input
-                        type="text"
-                        value={tick.label || ''}
-                        onChange={(e) => {
-                          const newTicks = [...customTicks];
-                          newTicks[index].label = e.target.value;
-                          setCustomTicks(newTicks);
-                        }}
-                        placeholder="Label"
-                        className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                      <button
-                        onClick={() => {
-                          setCustomTicks(customTicks.filter((_, i) => i !== index));
-                        }}
-                        className="px-3 text-red-500 hover:text-red-700 transition-colors duration-200"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => {
-                      setCustomTicks([...customTicks, { position: 0, label: '', isMajor: true }]);
-                    }}
-                    className="text-blue-500 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
-                  >
-                    + Add Point
-                  </button>
-                </div>
-              </div>
-            )}
-
+            <textarea
+              value={newProjectDescription}
+              onChange={(e) => setNewProjectDescription(e.target.value)}
+              placeholder="Project Description"
+              className="w-full px-4 py-2 mb-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[100px] resize-y text-black"
+            />
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsCreatingProject(false)}
@@ -979,8 +839,6 @@ export default function Home() {
                 <div className="relative">
                   <Timeline 
                     {...getTimelineConfig()}
-                    leftMargin={60}
-                    rightMargin={60}
                     events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
                     onEventDrop={handleEventDrop}
                     dragOverTarget={dragOverTarget}

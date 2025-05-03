@@ -27,7 +27,6 @@ interface TimelineEvent {
 
 interface TimelineProps {
   className?: string;
-  ticks?: Tick[];
   events?: TimelineEvent[];
   leftMargin?: number;
   rightMargin?: number;
@@ -42,7 +41,6 @@ interface TimelineProps {
 
 export default function Timeline({ 
   className = '', 
-  ticks = [],
   events = [],
   leftMargin = 40,
   rightMargin = 40,
@@ -102,27 +100,6 @@ export default function Timeline({
           right: `${rightMargin}px`
         }}
       ></div>
-      
-      {/* Tick marks */}
-      {ticks.map((tick, index) => (
-        <div
-          key={index}
-          className="absolute top-1/2 transform -translate-y-1/2"
-          style={{ 
-            left: `calc(${leftMargin}px + ${tick.position * (100 - (leftMargin + rightMargin) / 16)}%)`
-          }}
-        >
-          {/* Tick line */}
-          <div className={`w-0.5 bg-gray-600 ${tick.isMajor ? 'h-6' : 'h-3'}`}></div>
-          
-          {/* Label */}
-          {tick.label && (
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-              {tick.label}
-            </div>
-          )}
-        </div>
-      ))}
 
       {/* Event cards */}
       {events.map((event) => (
