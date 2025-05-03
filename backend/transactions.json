@@ -1,0 +1,34 @@
+[
+  {
+    "amount": 115,
+    "description": "Booked an appointment at Luxe Nails downtown including tip."
+  },
+  {
+    "amount": 58,
+    "description": "Used Uber Premium for both trips, as event had a dress code."
+  },
+  {
+    "amount": 239,
+    "description": "Bought a leather handbag from Kate Spade outlet and had it gift-wrapped."
+  },
+  {
+    "amount": 174,
+    "description": "Purchased full set of Kiehl's products including cleanser, serum, and moisturizer."
+  },
+  {
+    "amount": 86,
+    "description": "Covered brunch at a rooftop café including drinks and tip."
+  },
+  {
+    "amount": 232,
+    "description": "Rented a co-working room for one day and bought name tags, markers, and extension cords."
+  },
+  {
+    "amount": 198,
+    "description": "Ordered 8 large pizzas and 3 bottles of soda from a local pizzeria with discount for bulk order."
+  },
+  {
+    "amount": 167,
+    "description": "Bought chips, fruit packs, paper cups, and printed participant schedules and feedback forms."
+  }
+]
