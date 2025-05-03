@@ -56,6 +56,7 @@ def generate_ideas(n=5):
         range_type = random.choice(["year", "month", "day"])
         random_time = generate_random_time(range_type)
         idea = {
+            'id': random.randint(1, 1000),
             'type': 'idea',
             'content': f'idea {random.randint(1, 100)}',
             'time': random_time.isoformat(),
@@ -66,8 +67,10 @@ def generate_ideas(n=5):
 
 @app.post("/generate-plan")
 async def generate_plan(request: GeneratePlanPayload):
-    result = run_combine_workflow(request.Card, request.CardList)
-    print(f"Result: {result}")
+    # result = run_combine_workflow(request.Card, request.CardList)
+    # print(f"Result: {result}")
+    result = generate_ideas(5)  # Generate 5 random ideas for demonstration
+
     return {'cards': result}
 
 @app.post("/combine-cards")

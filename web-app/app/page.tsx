@@ -216,6 +216,7 @@ export default function Home() {
         id: card1?.id || '',
         description: card1?.content || '',
         budget: card1?.cost || '',
+        card_type: 'IdeaCard',
         time: card1?.time || '',
       },
       Card2: {
@@ -312,6 +313,7 @@ export default function Home() {
             id: card1.id,
             description: card1?.content || '',
             budget: card1?.cost || '',
+            card_type: 'IdeaCard',
             time: card1?.time || '',
           },
           Card2: {
@@ -398,11 +400,12 @@ export default function Home() {
           CardList: cardList.map(card => ({
             id: card.id,
             description: card.content,
-            type: card.type,
+            card_type: 'IdeaCard',
             time: card.time || '',
             budget: card.cost || '',
           }))
         };
+        console.log('inputPayload', inputPayload);
 
         const newCards = await generatePlan(inputPayload);
 
