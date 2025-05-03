@@ -877,7 +877,7 @@ print("\nGraph compiled successfully.")
 def run_combine_workflow(
     json_list1: List[Dict[str, Any]],
     json_list2: List[Dict[str, Any]]
-) -> Optional[str]:
+) -> Optional[List[Dict[str, Any]]]:
     """Runs the Supervisor -> Combiner -> Idea workflow for two JSON lists.
     Sets action type based on list lengths.
     """

@@ -485,26 +485,40 @@ export default function Home() {
         console.log('inputPayload', inputPayload);
 
         const response = await generatePlan(inputPayload);
-        const newCards = response.cards;
-        console.log('newCards', newCards);
+        console.log('Type of response', typeof response);
+        const newCards = response.cards ?? [];
+        // console log the variable type of new Cards
 
-        // Replace all previous timeline events
-        const allTimes = newCards
-          .filter((c: CardProps) => c.time)
-          .map((c: CardProps) => new Date(c.time!).getTime());
+    
+        console.log('Type of newCards', typeof newCards);
 
-        const minTime = Math.min(...allTimes);
-        const maxTime = Math.max(...allTimes);
-        const timeRange = maxTime - minTime || 1;
+        // Build cardsList
+        const cardsList = newCards.map((card: any) => ({
+          id: card.card_id,
+          content: card.content,
+          type: card.type,
+          time: card.time,
+          cost: card.cost
+        }));
 
-        const newTimelineEvents: TimelineEvent[] = newCards
-          .filter((card: CardProps) => card.type === 'idea' && card.time)
+        console.log('cardsList', cardsList);
+
+        // Filter out cards without a valid time
+        const validTimes = cardsList
+          .map(c => new Date(c.time))
+          .filter((date: Date) => !isNaN(date.getTime()));
+
+        const minTime = validTimes.length > 0 ? Math.min(...validTimes.map((d: Date) => d.getTime())) : null;
+        const maxTime = validTimes.length > 0 ? Math.max(...validTimes.map((d: Date) => d.getTime())) : null;
+        const timeRange = minTime !== null && maxTime !== null ? maxTime - minTime || 1 : 1;
+
+        const newTimelineEvents: TimelineEvent[] = cardList
           .map((card: CardProps, index: number) => {
             const time = new Date(card.time!).getTime();
             return {
               id: Date.now().toString() + index,
               position: (time - minTime) / timeRange,
-              time: card.time,
+              time: card.time!, // 👈 assert non-null
               content: card.content,
               type: 'idea',
               cost: card.cost,
@@ -512,6 +526,7 @@ export default function Home() {
               cards: [card],
             };
           });
+
 
         setProjects(prevProjects =>
           prevProjects.map(project =>
