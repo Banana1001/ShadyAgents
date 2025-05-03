@@ -301,7 +301,7 @@ export default function Home() {
 
       if (existingEvent) {
         // Get new action cards from the agent
-        const newCards = await fakeCombineCard(`Card placed on idea event: ${cardContent}`);
+        const newCards = await fakeCombineCard(`Combine ${existingEvent.cards[0].content} and ${cardContent}`);
         
         const returnedCard = newCards[0];
 
@@ -367,7 +367,7 @@ export default function Home() {
         };
 
         // Get new action cards from the agent
-        const newCards = await fakeGeneratePlan(`Card placed on timeline event: ${cardContent}`);
+        const newCards = await fakeGeneratePlan(`User: ${cardContent}`);
 
         // Replace all previous timeline events
         const allTimes = newCards
@@ -782,7 +782,7 @@ export default function Home() {
             </div>
 
             {/* Chat section */}
-            <div className="border-t border-gray-200 bg-white shadow-lg">
+            <div className="bg-white shadow-lg">
               {/* Horizontal action card row */}
               <div className="px-4 pb-3">
                 <div className="flex gap-4 overflow-x-auto py-4">
@@ -805,7 +805,7 @@ export default function Home() {
               <div className="p-3 flex gap-2 px-10 border-t border-gray-100">
                 <input
                   className="flex-1 border border-gray-200 text-black rounded-md px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Type your message..."
+                  placeholder="Enter your input..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
@@ -814,7 +814,7 @@ export default function Home() {
                   className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors shadow-md"
                   onClick={sendMessage}
                 >
-                  Send
+                  Create
                 </button>
               </div>
             </div>
