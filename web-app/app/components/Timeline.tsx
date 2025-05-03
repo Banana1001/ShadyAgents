@@ -1,3 +1,10 @@
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
+import 'katex/dist/katex.min.css';
+
 interface Tick {
   position: number; // 0 to 1 representing position on timeline
   label?: string;
@@ -34,6 +41,8 @@ export default function Timeline({
   rightMargin = 40,
   onEventDrop
 }: TimelineProps) {
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
@@ -45,6 +54,31 @@ export default function Timeline({
       onEventDrop?.(eventId, cardData);
     } catch (error) {
       console.error('Invalid card data');
+    }
+  };
+
+  const toggleEvent = (eventId: string) => {
+    setExpandedEvents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  const getEventTypeColor = (type: 'action' | 'idea' | 'generated') => {
+    switch (type) {
+      case 'action':
+        return 'bg-blue-500';
+      case 'idea':
+        return 'bg-purple-500';
+      case 'generated':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -91,29 +125,63 @@ export default function Timeline({
           }}
         >
           <div 
-            className={`bg-white shadow-md rounded-lg p-2 w-[200px] ${
+            className={`bg-white shadow-md rounded-lg w-[320px] ${
               event.placement === 'above' ? '-mt-20' : 'mt-32'
-            } transition-all hover:shadow-lg`}
+            } transition-all hover:shadow-lg overflow-hidden`}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, event.id)}
           >
-            <div className="flex flex-col">
-              <p className="text-gray-800 text-xs font-medium">{event.content}</p>
-              
-              {/* Event cards */}
-              {event.cards && event.cards.length > 0 && (
-                <div className="space-y-1.5 mt-2 pt-2 border-t border-gray-100">
-                  {event.cards.map((card) => (
-                    <div 
-                      key={card.id}
-                      className="bg-gray-50 rounded p-1.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      {card.content}
-                    </div>
-                  ))}
-                </div>
+            {/* Event header */}
+            <div 
+              className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => toggleEvent(event.id)}
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${getEventTypeColor(event.type)}`} />
+                <p className="text-gray-800 text-sm font-medium">{event.content.split('\n')[0]}</p>
+              </div>
+              {expandedEvents.has(event.id) ? (
+                <ChevronUpIcon className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronDownIcon className="w-4 h-4 text-gray-500" />
               )}
             </div>
+            
+            {/* Expanded content */}
+            {expandedEvents.has(event.id) && (
+              <div className="p-3 pt-0 border-t border-gray-100">
+                {/* Event description with markdown */}
+                <div className="prose prose-sm max-w-none text-gray-600">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
+                    {event.content}
+                  </ReactMarkdown>
+                </div>
+                
+                {/* Event cards */}
+                {event.cards && event.cards.length > 0 && (
+                  <div className="space-y-2 mt-3 pt-3 border-t border-gray-100">
+                    {event.cards.map((card) => (
+                      <div 
+                        key={card.id}
+                        className="bg-gray-50 rounded p-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="prose prose-sm max-w-none">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                          >
+                            {card.content}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}
