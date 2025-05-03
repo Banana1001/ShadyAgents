@@ -18,6 +18,7 @@ interface TimelineEvent {
   content: string;
   type: 'action' | 'idea' | 'combine';
   placement: 'above' | 'below';
+  cost?: number; // Added cost property
   cards?: Array<{
     id: string;
     content: string;
@@ -163,6 +164,10 @@ export default function Timeline({
 
                 <div className="text-xs text-gray-400 mt-2">
                   Time: {new Date(event.time).toLocaleString()}
+                </div>
+
+                <div className="text-xs text-gray-400 mt-2">
+                  Cost: {new String(event.cost).toLocaleString()}
                 </div>
                 
                 {/* Event cards */}

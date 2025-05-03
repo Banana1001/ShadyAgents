@@ -1,7 +1,9 @@
 export type CardProps = {
+    id: string;
     type: 'action' | 'idea' | 'combine';
     content: string;
     time?: string;
+    cost?: number;
 };
 
 export default function Card({ type, content }: CardProps) {

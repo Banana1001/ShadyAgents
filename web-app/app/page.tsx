@@ -36,11 +36,13 @@ interface TimelineEvent {
   time: string;
   type: 'action' | 'idea' | 'combine';
   placement: 'above' | 'below';
+  cost?: number; // Added cost property
   cards: Array<{
     id: string;
     content: string;
     type: 'action' | 'idea' | 'combine';
     time?: string;
+    cost?: number;
   }>;
 }
 
@@ -121,6 +123,7 @@ export default function Home() {
     setInput(''); // Clear input immediately
 
     const newCard: CardProps = {
+      id: Date.now().toString(),
       type: 'action',
       content: messageToSend,
     };
@@ -316,11 +319,11 @@ export default function Home() {
     const currentProject = projects.find(p => p.id === selectedProject);
     if (!currentProject) return;
 
-    const cardContent = draggedCard 
-      ? draggedCard.content 
-      : currentProject.placedCards.find(card => card.id === draggedPlacedCardId)?.content;
+    const dragged = draggedCard 
+      ? draggedCard 
+      : currentProject.placedCards.find(card => card.id === draggedPlacedCardId);
 
-    if (cardContent) {
+    if (dragged) {
       // Find if there's an existing event near the drop position
       const dropPosition = (e.clientX - e.currentTarget.getBoundingClientRect().left) / e.currentTarget.getBoundingClientRect().width;
       const existingEvent = currentProject.timelineEvents.find(event => 
@@ -329,7 +332,7 @@ export default function Home() {
 
       if (existingEvent) {
         // Get new action cards from the agent
-        const newCards = await fakeCombineCard(`Combine ${existingEvent.cards[0].content} and ${cardContent}`);
+        const newCards = await fakeCombineCard(`Combine ${existingEvent.cards[0].id} and ${dragged.id}`);
         
         const returnedCard = newCards[0];
 
@@ -339,6 +342,7 @@ export default function Home() {
           time: returnedCard.time,
           content: returnedCard.content,
           type: returnedCard.type as 'combine' | 'idea' | 'action',
+          cost: returnedCard.cost,
           placement: existingEvent.placement,
           cards: [returnedCard],
           position: 0 // temporary, will be recalculated
@@ -388,14 +392,14 @@ export default function Home() {
           id: Date.now().toString(),
           position: dropPosition,
           time: new Date().toISOString(),
-          content: cardContent,
+          content: dragged.content,
           type: draggedCard?.type || 'action',
           placement: 'above',
           cards: []
         };
 
         // Get new action cards from the agent
-        const newCards = await fakeGeneratePlan(`User: ${cardContent}`);
+        const newCards = await fakeGeneratePlan(`User: ${dragged.content}`);
 
         // Replace all previous timeline events
         const allTimes = newCards
@@ -411,11 +415,12 @@ export default function Home() {
           .map((card: CardProps, index: number) => {
             const time = new Date(card.time!).getTime();
             return {
-              id: Date.now().toString() + index,
+              id: card.id,
               position: (time - minTime) / timeRange,
               time: card.time,
               content: card.content,
               type: 'idea',
+              cost: card.cost,
               placement: index % 2 === 0 ? 'above' : 'below',
               cards: [card],
             };
@@ -788,7 +793,7 @@ export default function Home() {
                         transform: 'translate(-50%, -50%)'
                       }}
                     >
-                      <Card type={card.type} content={card.content} />
+                      <Card id={card.id} type={card.type} content={card.content} />
                     </div>
                   ))}
               </div>
@@ -832,7 +837,7 @@ export default function Home() {
                         transform: 'translate(-50%, -50%)'
                       }}
                     >
-                      <Card type={card.type} content={card.content} />
+                      <Card id={card.id} type={card.type} content={card.content} />
                     </div>
                   ))}
               </div>
@@ -851,7 +856,7 @@ export default function Home() {
                       onDragEnd={handleDragEnd}
                       className="cursor-move"
                     >
-                      <Card type={card.type} content={card.content} />
+                      <Card id={card.id} type={card.type} content={card.content} />
                     </div>
                   ))}
                 </div>

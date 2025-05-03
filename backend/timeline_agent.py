@@ -3,8 +3,14 @@ from langgraph.prebuilt import tool_node
 from typing import List, Dict, TypedDict
 from openai import OpenAI
 from datetime import date
+import os
+from dotenv import load_dotenv
 
-client = OpenAI(api_key="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")
+# Load environment variables
+load_dotenv()
+os.environ["OPENAI_API_KEY"] = os.getenv("API_KEY_GPT")
+
+client = OpenAI()
 
 def idea_to_timeline_node(state: dict) -> dict:
     today_str = date.today().isoformat()  # e.g. '2025-05-03'
@@ -31,7 +37,8 @@ Your output MUST be:
    {{
      'type': 'idea',
      'content': '<short summary of the input idea>',
-     'time': '<date in ISO format like "2025-06-01">'
+     'time': '<date in ISO format like "2025-06-01">',
+     'cost': '<cost in number format>'
    }}
 
 Guidelines:
