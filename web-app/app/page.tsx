@@ -143,6 +143,23 @@ export default function Home() {
     return (data.cards);
   };
 
+  const saveTimeline = async (timelineEvents: TimelineEvent[]) => {
+    await fetch('/api/saveTimeline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(timelineEvents),
+    });
+  };
+
+  const saveCards = async (cards: CardProps[]) => {
+    await fetch('/api/saveCards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cards),
+    });
+  };
+
+
 
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
@@ -363,6 +380,8 @@ export default function Home() {
               : project
           )
         );
+
+        saveCards(newCards);
       } else {
         // Create a new event
         const newEvent: TimelineEvent = {
@@ -415,6 +434,8 @@ export default function Home() {
               : project
           )
         );
+
+        saveTimeline(newTimelineEvents);
 
       }
 
@@ -885,7 +906,7 @@ export default function Home() {
 
               {/* Timeline axis with drop zone */}
               <div 
-                className="relative mx-6 my-4 rounded-2xl border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-lg z-50 overflow-hidden"
+                className="relative mx-6 my-4 rounded-2xl border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-lg z-50"
                 onDragOver={handleDragOver}
                 onDrop={handleAxisDrop}
               >
