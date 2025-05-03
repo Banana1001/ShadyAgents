@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Timeline from './components/Timeline';
-import Card, { CardProps } from './components/Card';
+import Card, {CardProps} from './components/Card';
 
 // Example timeline configurations
 const timelineConfigs = {
@@ -320,7 +320,25 @@ export default function Home() {
               />
 
               {/* Bottom canvas area */}
-              <div className="flex-1 bg-white border-t border-gray-200">
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  const data = e.dataTransfer.getData('text/plain');
+                  try {
+                    const droppedCard = JSON.parse(data);
+                    // Optional: store or visualize the dropped card
+
+                    // Trigger LLM response
+                    const newCards = await fakeAgentCall(`Dropped card: ${droppedCard.content}`);
+                    setCards(newCards);
+                  } catch (err) {
+                    console.error('Invalid drop payload:', err);
+                  }
+                }}
+                className="flex-1 bg-white border-t border-gray-200"
+              >
+                {/* This area is now a drop target */}
               </div>
             </div>
 
@@ -329,7 +347,7 @@ export default function Home() {
               {/* Display response */}
               {/* Horizontal action card row */}
               <div className="px-4 pb-3">
-                <div className="flex gap-4 overflow-x-auto">
+                <div className="flex gap-4 justify-center flex-wrap">
                   {cards.map((card, index) => (
                     <Card key={index} type={card.type} content={card.content} />
                   ))}
