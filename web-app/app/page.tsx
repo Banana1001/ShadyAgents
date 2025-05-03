@@ -83,7 +83,19 @@ export default function Home() {
         {
           id: '1',
           position: 0.25,
-          content: 'Morning Meeting',
+          content: `# Morning Meeting
+
+**Agenda:**
+- Project updates
+- Team sync
+- Action items
+
+*Location:* Conference Room A
+
+**Key Metrics:**
+- Progress: $\\frac{75}{100} = 75\\%$
+- Velocity: $v = \\frac{d}{t}$
+- Efficiency: $\\eta = \\frac{P_{out}}{P_{in}} \\times 100\\%$`,
           type: 'action',
           placement: 'above',
           cards: []
@@ -91,7 +103,17 @@ export default function Home() {
         {
           id: '2',
           position: 0.5,
-          content: 'Lunch Break',
+          content: `# Lunch Break
+
+**Schedule:**
+1. 12:00 - Team Lunch
+2. 13:00 - Quick Walk
+3. 13:30 - Back to Work
+
+**Health Metrics:**
+- Steps: $\\sum_{i=1}^{n} s_i$
+- Calories: $C = m \\times h \\times t$
+- Water Intake: $V = \\pi r^2h$`,
           type: 'action',
           placement: 'below',
           cards: []
@@ -99,7 +121,17 @@ export default function Home() {
         {
           id: '3',
           position: 0.75,
-          content: 'Project Review',
+          content: `# Project Review
+
+**Key Points:**
+- Budget Analysis
+- Timeline Assessment
+- Risk Evaluation
+
+**Financial Metrics:**
+- ROI: $ROI = \\frac{(Gain - Cost)}{Cost} \\times 100\\%$
+- NPV: $NPV = \\sum_{t=0}^{n} \\frac{R_t}{(1+i)^t}$
+- Break-even: $Q = \\frac{FC}{P-VC}$`,
           type: 'action',
           placement: 'above',
           cards: []
@@ -117,7 +149,17 @@ export default function Home() {
         {
           id: '1',
           position: 0.2,
-          content: 'Team Sync',
+          content: `# Team Sync
+
+**Agenda:**
+- Sprint Planning
+- Blockers Review
+- Resource Allocation
+
+**Sprint Metrics:**
+- Velocity: $v = \\frac{\\Delta x}{\\Delta t}$
+- Burndown: $B = \\sum_{i=1}^{n} (P_i - C_i)$
+- Capacity: $C = \\sum_{i=1}^{n} h_i \\times e_i$`,
           type: 'action',
           placement: 'above',
           cards: []
@@ -125,7 +167,17 @@ export default function Home() {
         {
           id: '2',
           position: 0.6,
-          content: 'Client Call',
+          content: `# Client Call
+
+**Discussion Points:**
+- Requirements Review
+- Timeline Updates
+- Budget Discussion
+
+**Project Metrics:**
+- Progress: $P = \\frac{C}{T} \\times 100\\%$
+- Risk Score: $R = \\sum_{i=1}^{n} (p_i \\times i_i)$
+- Quality Index: $Q = \\frac{\\sum_{i=1}^{n} q_i}{n}$`,
           type: 'action',
           placement: 'below',
           cards: []
@@ -143,7 +195,17 @@ export default function Home() {
         {
           id: '1',
           position: 0.3,
-          content: 'Q1 Review',
+          content: `# Q1 Review
+
+**Key Areas:**
+- Financial Performance
+- Operational Metrics
+- Strategic Goals
+
+**Financial Analysis:**
+- Growth Rate: $g = \\frac{(P_1 - P_0)}{P_0} \\times 100\\%$
+- Market Share: $MS = \\frac{S_i}{S_t} \\times 100\\%$
+- Profit Margin: $PM = \\frac{NP}{R} \\times 100\\%$`,
           type: 'action',
           placement: 'above',
           cards: []
@@ -151,7 +213,17 @@ export default function Home() {
         {
           id: '2',
           position: 0.7,
-          content: 'Q2 Planning',
+          content: `# Q2 Planning
+
+**Strategic Focus:**
+- Market Expansion
+- Product Development
+- Team Growth
+
+**Planning Metrics:**
+- Market Size: $MS = \\sum_{i=1}^{n} (P_i \\times Q_i)$
+- Growth Potential: $GP = \\frac{(TAM - SAM)}{SAM} \\times 100\\%$
+- Resource Allocation: $RA = \\sum_{i=1}^{n} (r_i \\times t_i)$`,
           type: 'action',
           placement: 'below',
           cards: []
