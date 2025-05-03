@@ -33,7 +33,7 @@ def generate_ideas(n=5):
 @app.post("/generate-plan")
 async def generate_plan(request: MessageRequest):
     result = generate_ideas(3)
-    return json.dumps(result, indent=2)
+    return {'cards': result}
 
 @app.post("/combine-cards")
 async def combine_cards(request: MessageRequest):

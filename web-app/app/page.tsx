@@ -132,6 +132,20 @@ export default function Home() {
     ));
   };
 
+  // Fake server call for demo purposes
+  const fakeServerCall = async(msg: string) => {
+    const res = await fetch('http://localhost:8000/generate-plan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: msg }),
+    });
+
+    const data = await res.json();
+    return (data.cards);
+  };
+
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
       const newProject: Project = {
@@ -231,7 +245,7 @@ export default function Home() {
       : currentProject.placedCards.find(card => card.id === draggedPlacedCardId)?.content;
 
     if (cardContent) {
-      const newCards = await fakeAgentCall(`refresh`);
+      const newCards = await fakeServerCall(`refresh`);
       
       // Update project with new cards and remove the placed card
       setProjects(prevProjects => 
