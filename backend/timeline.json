@@ -1,0 +1,27 @@
+{
+  "in_timeline": [
+    {
+      "id": "card-idea-default",
+      "card_type": "IdeaCard",
+      "title": "Weekend Trip Example",
+      "description": "A sample idea card for a weekend getaway.",
+      "budget": "Medium",
+      "time": "Weekend",
+      "created_at": "2025-05-03T06:51:21.116937+00:00"
+    }
+  ],
+  "out_timeline": [
+    {
+      "id": "card-custom-467c59",
+      "card_type": "CustomCard",
+      "user_query": "increase budget",
+      "created_at": "2025-05-03T06:51:40.529259+00:00"
+    },
+    {
+      "id": "card-custom-cc8a4b",
+      "card_type": "CustomCard",
+      "user_query": "decrease budget",
+      "created_at": "2025-05-03T07:40:03.671719+00:00"
+    }
+  ]
+}
