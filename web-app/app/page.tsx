@@ -69,10 +69,38 @@ interface PlacedCard extends CardProps {
   combinedCards?: string[]; // Track IDs of cards that were combined
 }
 
+// Add this function at the top level, before the Home component
+const generateICS = (events: TimelineEvent[], projectName: string) => {
+  const icsEvents = events.map(event => {
+    const startDate = new Date(event.time);
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour duration by default
+    
+    return [
+      'BEGIN:VEVENT',
+      `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `SUMMARY:${event.content.split('\n')[0]}`,
+      `DESCRIPTION:${event.content.replace(/\n/g, '\\n')}`,
+      'END:VEVENT'
+    ].join('\r\n');
+  }).join('\r\n');
+
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//PlanCrafter//EN',
+    `X-WR-CALNAME:${projectName}`,
+    icsEvents,
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  return icsContent;
+};
+
 export default function Home() {
   const [input, setInput] = useState('');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
  
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -538,6 +566,22 @@ export default function Home() {
 
   const { cards, placedCards } = getCurrentProjectCards();
 
+  const handleExportCalendar = () => {
+    if (!selectedProject) return;
+    
+    const project = projects.find(p => p.id === selectedProject);
+    if (!project) return;
+
+    const icsContent = generateICS(project.timelineEvents, project.name);
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${project.name.toLowerCase().replace(/\s+/g, '-')}-calendar.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left Sidebar */}
@@ -545,7 +589,7 @@ export default function Home() {
         className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-800 text-white flex flex-col transition-all duration-300 ease-in-out`}
       >
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-          {!isSidebarCollapsed && <h2 className="text-xl font-semibold">Projects</h2>}
+          {!isSidebarCollapsed && <h2 className="text-xl font-semibold">PlanCrafter</h2>}
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="p-1 hover:bg-gray-700 rounded"
@@ -554,7 +598,7 @@ export default function Home() {
           </button>
         </div>
         
-        {/* New Project Button */}
+        {/* New Project Button - Only show when expanded */}
         {!isSidebarCollapsed && (
           <button 
             className="m-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center gap-2"
@@ -564,115 +608,11 @@ export default function Home() {
           </button>
         )}
 
-        {/* Project Creation Modal */}
-        {isCreatingProject && !isSidebarCollapsed && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">Create New Project</h3>
-              <input
-                type="text"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="Project Name"
-                className="w-full p-2 border rounded mb-4 text-gray-800"
-              />
-              
-              {/* Timeline Type Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Timeline Type
-                </label>
-                <select
-                  value={newProjectTimelineType}
-                  onChange={(e) => setNewProjectTimelineType(e.target.value as any)}
-                  className="w-full p-2 border rounded text-gray-800"
-                >
-                  <option value="hours">Hours (24-hour)</option>
-                  <option value="days">Days of Week</option>
-                  <option value="months">Months</option>
-                  <option value="custom">Custom Timeline</option>
-                </select>
-              </div>
-
-              {/* Custom Timeline Configuration */}
-              {newProjectTimelineType === 'custom' && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Timeline Points
-                  </label>
-                  <div className="space-y-2">
-                    {customTicks.map((tick, index) => (
-                      <div key={index} className="flex gap-2">
-                        <input
-                          type="number"
-                          value={tick.position}
-                          onChange={(e) => {
-                            const newTicks = [...customTicks];
-                            newTicks[index].position = parseFloat(e.target.value);
-                            setCustomTicks(newTicks);
-                          }}
-                          placeholder="Position (0-1)"
-                          className="w-24 p-2 border rounded text-gray-800"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                        />
-                        <input
-                          type="text"
-                          value={tick.label || ''}
-                          onChange={(e) => {
-                            const newTicks = [...customTicks];
-                            newTicks[index].label = e.target.value;
-                            setCustomTicks(newTicks);
-                          }}
-                          placeholder="Label"
-                          className="flex-1 p-2 border rounded text-gray-800"
-                        />
-                        <button
-                          onClick={() => {
-                            setCustomTicks(customTicks.filter((_, i) => i !== index));
-                          }}
-                          className="px-2 text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => {
-                        setCustomTicks([...customTicks, { position: 0, label: '', isMajor: true }]);
-                      }}
-                      className="text-blue-500 hover:text-blue-700 text-sm"
-                    >
-                      + Add Point
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setIsCreatingProject(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateProject}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Create
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Project List */}
         <div className="flex-1 overflow-y-auto">
           {!isSidebarCollapsed && (
             <div className="px-4 py-2">
-              <div className="text-sm text-gray-400 mb-2">Recent Projects</div>
+              <div className="text-sm text-gray-400 mb-2">Recent Plans</div>
               {projects.map((project) => (
                 <div 
                   key={project.id}
@@ -697,12 +637,129 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Project Creation Modal - Moved outside sidebar */}
+      {isCreatingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">Create New Project</h3>
+            <input
+              type="text"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="Project Name"
+              className="w-full p-2 border rounded mb-4 text-gray-800"
+            />
+            
+            {/* Timeline Type Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Timeline Type
+              </label>
+              <select
+                value={newProjectTimelineType}
+                onChange={(e) => setNewProjectTimelineType(e.target.value as any)}
+                className="w-full p-2 border rounded text-gray-800"
+              >
+                <option value="hours">Hours (24-hour)</option>
+                <option value="days">Days of Week</option>
+                <option value="months">Months</option>
+                <option value="custom">Custom Timeline</option>
+              </select>
+            </div>
+
+            {/* Custom Timeline Configuration */}
+            {newProjectTimelineType === 'custom' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Custom Timeline Points
+                </label>
+                <div className="space-y-2">
+                  {customTicks.map((tick, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="number"
+                        value={tick.position}
+                        onChange={(e) => {
+                          const newTicks = [...customTicks];
+                          newTicks[index].position = parseFloat(e.target.value);
+                          setCustomTicks(newTicks);
+                        }}
+                        placeholder="Position (0-1)"
+                        className="w-24 p-2 border rounded text-gray-800"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                      />
+                      <input
+                        type="text"
+                        value={tick.label || ''}
+                        onChange={(e) => {
+                          const newTicks = [...customTicks];
+                          newTicks[index].label = e.target.value;
+                          setCustomTicks(newTicks);
+                        }}
+                        placeholder="Label"
+                        className="flex-1 p-2 border rounded text-gray-800"
+                      />
+                      <button
+                        onClick={() => {
+                          setCustomTicks(customTicks.filter((_, i) => i !== index));
+                        }}
+                        className="px-2 text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      setCustomTicks([...customTicks, { position: 0, label: '', isMajor: true }]);
+                    }}
+                    className="text-blue-500 hover:text-blue-700 text-sm"
+                  >
+                    + Add Point
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsCreatingProject(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProject}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Title */}
-        <header className="text-3xl font-bold text-gray-800 mt-4 ml-6">
-          {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'Planner App'}
-        </header>
+        {/* Title and Export Button */}
+        <div className="flex items-center justify-between mt-4 mx-6">
+          <header className="text-3xl font-bold text-gray-800">
+            {selectedProject ? projects.find(p => p.id === selectedProject)?.name : 'PlanCrafter'}
+          </header>
+          {selectedProject && (
+            <button
+              onClick={handleExportCalendar}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+              Export Calendar
+            </button>
+          )}
+        </div>
 
         {selectedProject ? (
           <>
@@ -824,7 +881,7 @@ export default function Home() {
           <div className="flex-1 flex flex-col items-center justify-center p-8">
             <div className="max-w-2xl w-full text-center">
               <h1 className="text-4xl font-bold text-gray-800 mb-6">
-                Welcome to Planner App
+                Welcome to PlanCrafter
               </h1>
               <p className="text-gray-600 mb-8 text-lg">
                 Create a new project or select an existing one to get started with your planning journey.
