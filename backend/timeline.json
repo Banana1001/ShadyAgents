@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "in_timeline": [
     {
@@ -975,4 +976,55 @@
       "created_at": "2025-05-03T13:54:36.366827+00:00"
     }
   ]
+=======
+{
+  "in_timeline": [
+    {
+      "card_type": "IdeaCard",
+      "title": "Creative Hackathon Kickoff & Team Formation",
+      "description": "Start with themed icebreaker activities and immersive team-building challenges that spark creativity and collaboration among participants.",
+      "budget": 600,
+      "time": "2024-07-01T09:00:00",
+      "id": "card-idea-187123",
+      "created_at": "2025-05-03T13:27:37.535878+00:00"
+    },
+    {
+      "card_type": "IdeaCard",
+      "title": "Interactive Mentorship & Workshops",
+      "description": "Host hands-on tech demos and live problem-solving sessions led by industry innovators to engage participants deeply in banking technologies and cybersecurity.",
+      "budget": 1500,
+      "time": "2024-07-01T14:00:00",
+      "id": "card-idea-5f6add",
+      "created_at": "2025-05-03T13:27:37.535878+00:00"
+    },
+    {
+      "card_type": "IdeaCard",
+      "title": "Experiential Networking & Sponsor Booths",
+      "description": "Create experiential zones with gamified sponsor interactions and virtual reality demos to enhance networking and engagement with fintech partners.",
+      "budget": 900,
+      "time": "2024-07-01T17:00:00",
+      "id": "card-idea-874a40",
+      "created_at": "2025-05-03T13:27:37.535878+00:00"
+    },
+    {
+      "card_type": "IdeaCard",
+      "title": "Dynamic Pitching & Awards Ceremony",
+      "description": "Incorporate dynamic presentation formats, audience voting, and surprise creativity awards to celebrate innovation and team achievements.",
+      "budget": 800,
+      "time": "2024-07-02T10:00:00",
+      "id": "card-idea-af03b1",
+      "created_at": "2025-05-03T13:27:37.535878+00:00"
+    },
+    {
+      "card_type": "IdeaCard",
+      "title": "Enhanced Participant Engagement with AR & Social Contests",
+      "description": "Expand gamification through augmented reality quests, social media storytelling contests, and personalized recognition moments to maintain excitement.",
+      "budget": 600,
+      "time": "2024-07-01T09:00:00",
+      "id": "card-idea-ffe462",
+      "created_at": "2025-05-03T13:27:37.535878+00:00"
+    }
+  ],
+  "out_timeline": []
+>>>>>>> origin/combiner
 }

@@ -877,7 +877,7 @@ print("\nGraph compiled successfully.")
 def run_combine_workflow(
     json_list1: List[Dict[str, Any]],
     json_list2: List[Dict[str, Any]]
-) -> Optional[List[Dict[str, Any]]]:
+) -> Optional[str]:
     """Runs the Supervisor -> Combiner -> Idea workflow for two JSON lists.
     Sets action type based on list lengths.
     """
@@ -961,7 +961,7 @@ def combine_json_with_timeline(custom_card_id: str) -> Optional[str]:
     
     # Load all cards
     all_cards = load_timeline()
-    
+    action_type = "plan"
     # Get the specified CustomCard
     custom_card = get_card(all_cards, custom_card_id)
     if not custom_card or custom_card.get("card_type") != "CustomCard":
@@ -972,10 +972,12 @@ def combine_json_with_timeline(custom_card_id: str) -> Optional[str]:
     # Extract all IdeaCards from in_timeline
     idea_cards = [card for card in all_cards.values() if card.get("card_type") == "IdeaCard"]
     if not idea_cards:
-        error_msg = "Error: No IdeaCards found in the timeline."
-        print(error_msg)
-        return error_msg
-    
+        if action_type == "plan":
+            print("Info: No existing IdeaCards. Proceeding with 'plan' action from scratch.")
+            # Let execution continue, idea_cards_list is empty
+        else:
+            # If it's not a 'plan', maybe it requires existing ideas
+            print(f"Error: No IdeaCards found, required for action '{action_type}'.")
     # Convert IdeaCards to JSON list format
     idea_list = []
     for i, card in enumerate(idea_cards):
