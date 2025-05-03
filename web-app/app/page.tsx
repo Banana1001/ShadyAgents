@@ -91,14 +91,14 @@ export default function Home() {
     );
   };
 
-  // Fake server call of generating a plan for demo purposes
-  const fakeGeneratePlan = async(msg: string) => {
+  // server call of generating a plan for demo purposes
+  const generatePlan = async(input: any) => {
     const res = await fetch('http://localhost:8000/generate-plan', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: msg }),
+      body: JSON.stringify(input),
     });
 
     const data = await res.json();
@@ -387,7 +387,24 @@ export default function Home() {
         };
 
         // Get new action cards from the agent
-        const newCards = await fakeGeneratePlan(`User: ${dragged.content}`);
+        const cardList = currentProject.timelineEvents.flatMap(event => event.cards);
+        const inputPayload = {
+          Card: {
+            id: dragged.id,
+            user_query: dragged.content,
+            time: dragged.time || '',
+            budget: dragged.cost || '',
+          },
+          CardList: cardList.map(card => ({
+            id: card.id,
+            description: card.content,
+            type: card.type,
+            time: card.time || '',
+            budget: card.cost || '',
+          }))
+        };
+
+        const newCards = await generatePlan(inputPayload);
 
         // Replace all previous timeline events
         const allTimes = newCards

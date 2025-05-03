@@ -1,5 +1,6 @@
 import datetime
 import json
+from typing import List
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -23,6 +24,10 @@ class MessageRequest(BaseModel):
 class CombineCardPayload(BaseModel):
     Card1: dict
     Card2: dict
+
+class GeneratePlanPayload(BaseModel):
+    Card: dict
+    CardList: List
 
 
 def generate_random_time(range_type: str) -> datetime.datetime:
@@ -60,8 +65,9 @@ def generate_ideas(n=5):
     return ideas
 
 @app.post("/generate-plan")
-async def generate_plan(request: MessageRequest):
-    result = generate_ideas(3)
+async def generate_plan(request: GeneratePlanPayload):
+    result = run_combine_workflow(request.Card, request.CardList)
+    print(f"Result: {result}")
     return {'cards': result}
 
 @app.post("/combine-cards")
