@@ -29,6 +29,19 @@ const timelineConfigs = {
   }
 };
 
+interface TimelineEvent {
+  id: string;
+  position: number;
+  content: string;
+  type: 'action' | 'idea' | 'generated';
+  placement: 'above' | 'below';
+  cards: Array<{
+    id: string;
+    content: string;
+    type: 'action' | 'idea' | 'generated';
+  }>;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -41,6 +54,7 @@ interface Project {
   }>;
   cards: CardProps[];
   placedCards: PlacedCard[];
+  timelineEvents: TimelineEvent[];
 }
 
 interface PlacedCard extends CardProps {
@@ -64,7 +78,33 @@ export default function Home() {
       createdAt: new Date(),
       timelineType: 'hours',
       cards: [],
-      placedCards: []
+      placedCards: [],
+      timelineEvents: [
+        {
+          id: '1',
+          position: 0.25,
+          content: 'Morning Meeting',
+          type: 'action',
+          placement: 'above',
+          cards: []
+        },
+        {
+          id: '2',
+          position: 0.5,
+          content: 'Lunch Break',
+          type: 'action',
+          placement: 'below',
+          cards: []
+        },
+        {
+          id: '3',
+          position: 0.75,
+          content: 'Project Review',
+          type: 'action',
+          placement: 'above',
+          cards: []
+        }
+      ]
     },
     { 
       id: '2', 
@@ -72,7 +112,25 @@ export default function Home() {
       createdAt: new Date(),
       timelineType: 'days',
       cards: [],
-      placedCards: []
+      placedCards: [],
+      timelineEvents: [
+        {
+          id: '1',
+          position: 0.2,
+          content: 'Team Sync',
+          type: 'action',
+          placement: 'above',
+          cards: []
+        },
+        {
+          id: '2',
+          position: 0.6,
+          content: 'Client Call',
+          type: 'action',
+          placement: 'below',
+          cards: []
+        }
+      ]
     },
     { 
       id: '3', 
@@ -80,7 +138,25 @@ export default function Home() {
       createdAt: new Date(),
       timelineType: 'months',
       cards: [],
-      placedCards: []
+      placedCards: [],
+      timelineEvents: [
+        {
+          id: '1',
+          position: 0.3,
+          content: 'Q1 Review',
+          type: 'action',
+          placement: 'above',
+          cards: []
+        },
+        {
+          id: '2',
+          position: 0.7,
+          content: 'Q2 Planning',
+          type: 'action',
+          placement: 'below',
+          cards: []
+        }
+      ]
     },
   ]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -135,7 +211,8 @@ export default function Home() {
         timelineType: newProjectTimelineType,
         ...(newProjectTimelineType === 'custom' && { customTicks }),
         cards: [],
-        placedCards: []
+        placedCards: [],
+        timelineEvents: []
       };
       setProjects([...projects, newProject]);
       setSelectedProject(newProject.id);
@@ -213,6 +290,28 @@ export default function Home() {
     }
   };
 
+  const handleEventDrop = (eventId: string, card: { type: 'action' | 'idea' | 'generated', content: string }) => {
+    if (!selectedProject) return;
+
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? {
+              ...project,
+              timelineEvents: project.timelineEvents.map(event => 
+                event.id === eventId
+                  ? {
+                      ...event,
+                      cards: [...event.cards, { ...card, id: Date.now().toString() }]
+                    }
+                  : event
+              )
+            }
+          : project
+      )
+    );
+  };
+
   const handleAxisDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     if (!selectedProject) return;
@@ -225,20 +324,64 @@ export default function Home() {
       : currentProject.placedCards.find(card => card.id === draggedPlacedCardId)?.content;
 
     if (cardContent) {
-      const newCards = await fakeAgentCall(`Card placed on timeline axis: ${cardContent}`);
-      
-      // Update project with new cards and remove the placed card
-      setProjects(prevProjects => 
-        prevProjects.map(project => 
-          project.id === selectedProject
-            ? {
-                ...project,
-                cards: newCards,
-                placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
-              }
-            : project
-        )
+      // Find if there's an existing event near the drop position
+      const dropPosition = (e.clientX - e.currentTarget.getBoundingClientRect().left) / e.currentTarget.getBoundingClientRect().width;
+      const existingEvent = currentProject.timelineEvents.find(event => 
+        Math.abs(event.position - dropPosition) < 0.1
       );
+
+      if (existingEvent) {
+        // Get new action cards from the agent
+        const newCards = await fakeAgentCall(`Card placed on timeline event: ${cardContent}`);
+        
+        // Update the existing event while preserving its cards
+        setProjects(prevProjects => 
+          prevProjects.map(project => 
+            project.id === selectedProject
+              ? {
+                  ...project,
+                  timelineEvents: project.timelineEvents.map(event => 
+                    event.id === existingEvent.id
+                      ? {
+                          ...existingEvent,
+                          content: cardContent,
+                          type: draggedCard?.type || 'action'
+                        }
+                      : event
+                  ),
+                  cards: newCards,
+                  placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
+                }
+              : project
+          )
+        );
+      } else {
+        // Create a new event
+        const newEvent: TimelineEvent = {
+          id: Date.now().toString(),
+          position: dropPosition,
+          content: cardContent,
+          type: draggedCard?.type || 'action',
+          placement: 'above',
+          cards: []
+        };
+
+        // Get new action cards from the agent
+        const newCards = await fakeAgentCall(`Card placed on timeline: ${cardContent}`);
+
+        setProjects(prevProjects => 
+          prevProjects.map(project => 
+            project.id === selectedProject
+              ? {
+                  ...project,
+                  timelineEvents: [...project.timelineEvents, newEvent],
+                  cards: newCards,
+                  placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
+                }
+              : project
+          )
+        );
+      }
 
       // Clear drag states
       setDraggedCard(null);
@@ -579,6 +722,8 @@ export default function Home() {
                   {...getTimelineConfig()}
                   leftMargin={60}
                   rightMargin={60}
+                  events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
+                  onEventDrop={handleEventDrop}
                 />
               </div>
 
