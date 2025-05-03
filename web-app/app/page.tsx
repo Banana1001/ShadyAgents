@@ -41,6 +41,16 @@ interface Project {
   }>;
 }
 
+interface PlacedCard extends CardProps {
+  id: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  canvas: 'top' | 'bottom';
+  combinedCards?: string[]; // Track IDs of cards that were combined
+}
+
 export default function Home() {
   const [input, setInput] = useState('');
   const [cards, setCards] = useState<CardProps[]>([]);
@@ -70,6 +80,13 @@ export default function Home() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectTimelineType, setNewProjectTimelineType] = useState<'hours' | 'days' | 'months' | 'custom'>('hours');
   const [customTicks, setCustomTicks] = useState<Array<{ position: number; label?: string; isMajor?: boolean }>>([]);
+  const [placedCards, setPlacedCards] = useState<PlacedCard[]>([]);
+  const [draggedCard, setDraggedCard] = useState<CardProps | null>(null);
+  const [isDraggingPlacedCard, setIsDraggingPlacedCard] = useState(false);
+  const [draggedPlacedCardId, setDraggedPlacedCardId] = useState<string | null>(null);
+
+  const COMBINE_DISTANCE = 50; // Distance in pixels to trigger combination
+  const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -138,8 +155,180 @@ export default function Home() {
     return { ticks: [] };
   };
 
+  const handleDragStart = (card: CardProps) => {
+    setDraggedCard(card);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedCard(null);
+  };
+
+  const canCombineCards = (card1: PlacedCard, card2: PlacedCard) => {
+    const dx = card1.position.x - card2.position.x;
+    const dy = card1.position.y - card2.position.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < COMBINE_DISTANCE;
+  };
+
+  const combineCards = (card1: PlacedCard, card2: PlacedCard): PlacedCard => {
+    const combinedContent = `${card1.content}\n\n${card2.content}`;
+    const combinedIds = [
+      ...(card1.combinedCards || [card1.id]),
+      ...(card2.combinedCards || [card2.id])
+    ];
+
+    return {
+      id: Date.now().toString(),
+      type: 'action',
+      content: combinedContent,
+      position: {
+        x: (card1.position.x + card2.position.x) / 2,
+        y: (card1.position.y + card2.position.y) / 2
+      },
+      canvas: card1.canvas,
+      combinedCards: combinedIds
+    };
+  };
+
+  const isNearAxis = (y: number, canvasHeight: number, isTopCanvas: boolean) => {
+    if (isTopCanvas) {
+      return y > canvasHeight - AXIS_ZONE_HEIGHT;
+    } else {
+      return y < AXIS_ZONE_HEIGHT;
+    }
+  };
+
+  const handleAxisDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const cardContent = draggedCard 
+      ? draggedCard.content 
+      : placedCards.find(card => card.id === draggedPlacedCardId)?.content;
+
+    if (cardContent) {
+      const newCards = await fakeAgentCall(`Card placed on timeline axis: ${cardContent}`);
+      setCards(newCards);
+
+      // Remove the card that was placed on the axis
+      if (draggedPlacedCardId) {
+        setPlacedCards(prevCards => prevCards.filter(card => card.id !== draggedPlacedCardId));
+      }
+      // Clear the dragged card state
+      setDraggedCard(null);
+      setDraggedPlacedCardId(null);
+      setIsDraggingPlacedCard(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
+    e.preventDefault();
+    if (!draggedCard) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Check for potential combinations with existing cards
+    const cardsInCanvas = placedCards.filter(card => card.canvas === canvas);
+    const newCard: PlacedCard = {
+      ...draggedCard,
+      id: Date.now().toString(),
+      position: { x, y },
+      canvas
+    };
+
+    const cardToCombine = cardsInCanvas.find(card => 
+      canCombineCards(newCard, card)
+    );
+
+    let newCards = [...placedCards];
+    if (cardToCombine) {
+      // Remove the existing card and add the combined card
+      newCards = newCards.filter(card => card.id !== cardToCombine.id);
+      const combinedCard = combineCards(newCard, cardToCombine);
+      newCards.push(combinedCard);
+    } else {
+      newCards.push(newCard);
+    }
+
+    setPlacedCards(newCards);
+    setDraggedCard(null);
+  };
+
+  const handlePlacedCardDragStart = (e: React.DragEvent, cardId: string) => {
+    setIsDraggingPlacedCard(true);
+    setDraggedPlacedCardId(cardId);
+    // Set a custom drag image to make it look better
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
+  };
+
+  const handlePlacedCardDragEnd = () => {
+    setIsDraggingPlacedCard(false);
+    setDraggedPlacedCardId(null);
+  };
+
+  const handlePlacedCardDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
+    e.preventDefault();
+    if (!draggedPlacedCardId) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Get the card being dragged
+    const draggedCard = placedCards.find(card => card.id === draggedPlacedCardId);
+    if (!draggedCard) return;
+
+    // Check for potential combinations
+    const cardsInCanvas = placedCards.filter(card => 
+      card.canvas === canvas && card.id !== draggedPlacedCardId
+    );
+
+    const newPosition = { x, y };
+    let newCards = [...placedCards];
+
+    // Check if the card can combine with any existing card
+    const cardToCombine = cardsInCanvas.find(card => 
+      canCombineCards(
+        { ...draggedCard, position: newPosition },
+        card
+      )
+    );
+
+    if (cardToCombine) {
+      // Remove both cards and add the combined card
+      newCards = newCards.filter(card => 
+        card.id !== draggedPlacedCardId && card.id !== cardToCombine.id
+      );
+      const combinedCard = combineCards(
+        { ...draggedCard, position: newPosition },
+        cardToCombine
+      );
+      newCards.push(combinedCard);
+    } else {
+      // Just update the position of the dragged card
+      newCards = newCards.map(card => 
+        card.id === draggedPlacedCardId
+          ? { ...card, position: newPosition, canvas }
+          : card
+      );
+    }
+
+    setPlacedCards(newCards);
+    setIsDraggingPlacedCard(false);
+    setDraggedPlacedCardId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left Sidebar */}
       <div 
         className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-800 text-white flex flex-col transition-all duration-300 ease-in-out`}
@@ -309,47 +498,91 @@ export default function Home() {
             {/* Main content area with timeline and canvases */}
             <div className="flex-1 flex flex-col">
               {/* Top canvas area */}
-              <div className="flex-1 bg-white border-b border-gray-200">
+              <div 
+                className="flex-1 bg-white border-b border-gray-200 shadow-inner relative"
+                onDragOver={handleDragOver}
+                onDrop={(e) => isDraggingPlacedCard ? handlePlacedCardDrop(e, 'top') : handleDrop(e, 'top')}
+              >
+                {placedCards
+                  .filter(card => card.canvas === 'top')
+                  .map(card => (
+                    <div
+                      key={card.id}
+                      draggable
+                      onDragStart={(e) => handlePlacedCardDragStart(e, card.id)}
+                      onDragEnd={handlePlacedCardDragEnd}
+                      className={`absolute cursor-move transition-shadow ${
+                        draggedPlacedCardId === card.id ? 'opacity-50' : 'hover:shadow-lg'
+                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
+                      style={{
+                        left: card.position.x,
+                        top: card.position.y,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    >
+                      <Card type={card.type} content={card.content} />
+                    </div>
+                  ))}
               </div>
 
-              {/* Timeline axis */}
-              <Timeline 
-                {...getTimelineConfig()}
-                leftMargin={60}
-                rightMargin={60}
-              />
+              {/* Timeline axis with drop zone */}
+              <div 
+                className="relative"
+                onDragOver={handleDragOver}
+                onDrop={handleAxisDrop}
+              >
+                <div className="absolute inset-0 bg-blue-50 opacity-0 hover:opacity-20 transition-opacity pointer-events-none" />
+                <Timeline 
+                  {...getTimelineConfig()}
+                  leftMargin={60}
+                  rightMargin={60}
+                />
+              </div>
 
               {/* Bottom canvas area */}
               <div
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  const data = e.dataTransfer.getData('text/plain');
-                  try {
-                    const droppedCard = JSON.parse(data);
-                    // Optional: store or visualize the dropped card
-
-                    // Trigger LLM response
-                    const newCards = await fakeAgentCall(`Dropped card: ${droppedCard.content}`);
-                    setCards(newCards);
-                  } catch (err) {
-                    console.error('Invalid drop payload:', err);
-                  }
-                }}
-                className="flex-1 bg-white border-t border-gray-200"
+                className="flex-1 bg-white border-t border-gray-200 shadow-inner relative"
+                onDragOver={handleDragOver}
+                onDrop={(e) => isDraggingPlacedCard ? handlePlacedCardDrop(e, 'bottom') : handleDrop(e, 'bottom')}
               >
-                {/* This area is now a drop target */}
+                {placedCards
+                  .filter(card => card.canvas === 'bottom')
+                  .map(card => (
+                    <div
+                      key={card.id}
+                      draggable
+                      onDragStart={(e) => handlePlacedCardDragStart(e, card.id)}
+                      onDragEnd={handlePlacedCardDragEnd}
+                      className={`absolute cursor-move transition-shadow ${
+                        draggedPlacedCardId === card.id ? 'opacity-50' : 'hover:shadow-lg'
+                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
+                      style={{
+                        left: card.position.x,
+                        top: card.position.y,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    >
+                      <Card type={card.type} content={card.content} />
+                    </div>
+                  ))}
               </div>
             </div>
 
             {/* Chat section */}
-            <div className="border-t border-gray-200">
-              {/* Display response */}
+            <div className="border-t border-gray-200 bg-white shadow-lg">
               {/* Horizontal action card row */}
               <div className="px-4 pb-3">
-                <div className="flex gap-4 justify-center flex-wrap">
+                <div className="flex gap-4 overflow-x-auto py-4">
                   {cards.map((card, index) => (
-                    <Card key={index} type={card.type} content={card.content} />
+                    <div
+                      key={index}
+                      draggable
+                      onDragStart={() => handleDragStart(card)}
+                      onDragEnd={handleDragEnd}
+                      className="cursor-move"
+                    >
+                      <Card type={card.type} content={card.content} />
+                    </div>
                   ))}
                 </div>
               </div>
