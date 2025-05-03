@@ -290,6 +290,20 @@ export default function Home() {
     return (data.cards);
   };
 
+  // Fake server call of combining cards for demo purposes
+  const fakeCombineCard = async(msg: string) => {
+    const res = await fetch('http://localhost:8000/combine-cards', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: msg }),
+    });
+
+    const data = await res.json();
+    return (data.cards);
+  };
+
 
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
@@ -421,7 +435,7 @@ export default function Home() {
 
       if (existingEvent) {
         // Get new action cards from the agent
-        const newCards = await fakeAgentCall(`Card placed on timeline event: ${cardContent}`);
+        const newCards = await fakeCombineCard(`Card placed on timeline event: ${cardContent}`);
         
         // Update the existing event while preserving its cards
         setProjects(prevProjects => 
@@ -456,7 +470,7 @@ export default function Home() {
         };
 
         // Get new action cards from the agent
-        const newCards = await fakeAgentCall(`Card placed on timeline: ${cardContent}`);
+        const newCards = await fakeGeneratePlan(`Card placed on timeline event: ${cardContent}`);
 
         setProjects(prevProjects => 
           prevProjects.map(project => 

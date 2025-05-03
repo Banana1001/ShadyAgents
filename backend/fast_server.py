@@ -37,4 +37,4 @@ async def generate_plan(request: MessageRequest):
 
 @app.post("/combine-cards")
 async def combine_cards(request: MessageRequest):
-    return {'type': 'combine', 'content': f'idea {random.randint(1, 100)}', 'time': datetime.datetime.now().isoformat()}
+    return {'cards': [{'type': 'combine', 'content': f'idea {random.randint(1, 100)}', 'time': datetime.datetime.now().isoformat()}]}
