@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import Timeline from './components/Timeline';
 import Card, {CardProps} from './components/Card';
+import {
+  ChevronDownIcon,
+  ArrowLeftCircleIcon,
+  ArrowRightCircleIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/solid';
 
 // Example timeline configurations
 const timelineConfigs = {
@@ -313,13 +319,6 @@ export default function Home() {
               </div>
 
               {/* Timeline axis */}
-              <Timeline 
-                {...getTimelineConfig()}
-                leftMargin={60}
-                rightMargin={60}
-              />
-
-              {/* Bottom canvas area */}
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={async (e) => {
@@ -327,18 +326,23 @@ export default function Home() {
                   const data = e.dataTransfer.getData('text/plain');
                   try {
                     const droppedCard = JSON.parse(data);
-                    // Optional: store or visualize the dropped card
-
-                    // Trigger LLM response
-                    const newCards = await fakeAgentCall(`Dropped card: ${droppedCard.content}`);
+                    const newCards = await fakeAgentCall(`refresh`);
                     setCards(newCards);
                   } catch (err) {
                     console.error('Invalid drop payload:', err);
                   }
                 }}
-                className="flex-1 bg-white border-t border-gray-200"
+                className="relative z-10"
               >
-                {/* This area is now a drop target */}
+                <Timeline
+                  {...getTimelineConfig()}
+                  leftMargin={60}
+                  rightMargin={60}
+                />
+              </div>
+
+              {/* Bottom canvas area */}
+              <div className="flex-1 bg-white border-t border-gray-200">
               </div>
             </div>
 
@@ -353,6 +357,42 @@ export default function Home() {
                   ))}
                 </div>
               </div>
+              
+              {/* Dropdown menu with actions */}
+              <div className="flex justify-end px-10 pb-1 relative">
+                <details className="group relative">
+                  <summary className="flex items-center gap-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900">
+                    Actions
+                    <ChevronDownIcon className="w-4 h-4" />
+                  </summary>
+
+                  {/* Dropdown menu positioned above the button */}
+                  <div className="absolute right-0 bottom-full mb-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      onClick={() => console.log('Go Back')}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <ArrowLeftCircleIcon className="w-5 h-5 text-blue-500" />
+                      Go Back
+                    </button>
+                    <button
+                      onClick={() => console.log('Go Forward')}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <ArrowRightCircleIcon className="w-5 h-5 text-green-500" />
+                      Go Forward
+                    </button>
+                    <button
+                      onClick={() => console.log('Shuffle')}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <ArrowPathIcon className="w-5 h-5 text-purple-500" />
+                      Shuffle
+                    </button>
+                  </div>
+                </details>
+              </div>
+
 
               {/* Input box */}
               <div className="p-3 flex gap-2 px-10">
