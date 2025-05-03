@@ -39,6 +39,8 @@ interface Project {
     label?: string;
     isMajor?: boolean;
   }>;
+  cards: CardProps[];
+  placedCards: PlacedCard[];
 }
 
 interface PlacedCard extends CardProps {
@@ -53,7 +55,6 @@ interface PlacedCard extends CardProps {
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [cards, setCards] = useState<CardProps[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [projects, setProjects] = useState<Project[]>([
@@ -61,26 +62,31 @@ export default function Home() {
       id: '1', 
       name: 'Project Alpha', 
       createdAt: new Date(),
-      timelineType: 'hours'
+      timelineType: 'hours',
+      cards: [],
+      placedCards: []
     },
     { 
       id: '2', 
       name: 'Project Beta', 
       createdAt: new Date(),
-      timelineType: 'days'
+      timelineType: 'days',
+      cards: [],
+      placedCards: []
     },
     { 
       id: '3', 
       name: 'Project Gamma', 
       createdAt: new Date(),
-      timelineType: 'months'
+      timelineType: 'months',
+      cards: [],
+      placedCards: []
     },
   ]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectTimelineType, setNewProjectTimelineType] = useState<'hours' | 'days' | 'months' | 'custom'>('hours');
   const [customTicks, setCustomTicks] = useState<Array<{ position: number; label?: string; isMajor?: boolean }>>([]);
-  const [placedCards, setPlacedCards] = useState<PlacedCard[]>([]);
   const [draggedCard, setDraggedCard] = useState<CardProps | null>(null);
   const [isDraggingPlacedCard, setIsDraggingPlacedCard] = useState(false);
   const [draggedPlacedCardId, setDraggedPlacedCardId] = useState<string | null>(null);
@@ -89,15 +95,22 @@ export default function Home() {
   const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !selectedProject) return;
 
     const messageToSend = input;
     setInput(''); // Clear input immediately
 
     // TODO: Replace this with real agent call
-    const cards = await fakeAgentCall(messageToSend);
+    const newCards = await fakeAgentCall(messageToSend);
 
-    setCards(cards);
+    // Update cards for the selected project
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? { ...project, cards: newCards }
+          : project
+      )
+    );
   };
 
   // Fake agent for demo purposes
@@ -120,7 +133,9 @@ export default function Home() {
         name: newProjectName.trim(),
         createdAt: new Date(),
         timelineType: newProjectTimelineType,
-        ...(newProjectTimelineType === 'custom' && { customTicks })
+        ...(newProjectTimelineType === 'custom' && { customTicks }),
+        cards: [],
+        placedCards: []
       };
       setProjects([...projects, newProject]);
       setSelectedProject(newProject.id);
@@ -200,19 +215,32 @@ export default function Home() {
 
   const handleAxisDrop = async (e: React.DragEvent) => {
     e.preventDefault();
+    if (!selectedProject) return;
+
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
     const cardContent = draggedCard 
       ? draggedCard.content 
-      : placedCards.find(card => card.id === draggedPlacedCardId)?.content;
+      : currentProject.placedCards.find(card => card.id === draggedPlacedCardId)?.content;
 
     if (cardContent) {
       const newCards = await fakeAgentCall(`Card placed on timeline axis: ${cardContent}`);
-      setCards(newCards);
+      
+      // Update project with new cards and remove the placed card
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project.id === selectedProject
+            ? {
+                ...project,
+                cards: newCards,
+                placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
+              }
+            : project
+        )
+      );
 
-      // Remove the card that was placed on the axis
-      if (draggedPlacedCardId) {
-        setPlacedCards(prevCards => prevCards.filter(card => card.id !== draggedPlacedCardId));
-      }
-      // Clear the dragged card state
+      // Clear drag states
       setDraggedCard(null);
       setDraggedPlacedCardId(null);
       setIsDraggingPlacedCard(false);
@@ -221,14 +249,15 @@ export default function Home() {
 
   const handleDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
     e.preventDefault();
-    if (!draggedCard) return;
+    if (!draggedCard || !selectedProject) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Check for potential combinations with existing cards
-    const cardsInCanvas = placedCards.filter(card => card.canvas === canvas);
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
     const newCard: PlacedCard = {
       ...draggedCard,
       id: Date.now().toString(),
@@ -236,21 +265,27 @@ export default function Home() {
       canvas
     };
 
-    const cardToCombine = cardsInCanvas.find(card => 
+    // Check for potential combinations
+    const cardToCombine = currentProject.placedCards.find(card => 
       canCombineCards(newCard, card)
     );
 
-    let newCards = [...placedCards];
-    if (cardToCombine) {
-      // Remove the existing card and add the combined card
-      newCards = newCards.filter(card => card.id !== cardToCombine.id);
-      const combinedCard = combineCards(newCard, cardToCombine);
-      newCards.push(combinedCard);
-    } else {
-      newCards.push(newCard);
-    }
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: cardToCombine
+                ? [
+                    ...project.placedCards.filter(card => card.id !== cardToCombine.id),
+                    combineCards(newCard, cardToCombine)
+                  ]
+                : [...project.placedCards, newCard]
+            }
+          : project
+      )
+    );
 
-    setPlacedCards(newCards);
     setDraggedCard(null);
   };
 
@@ -273,52 +308,48 @@ export default function Home() {
 
   const handlePlacedCardDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
     e.preventDefault();
-    if (!draggedPlacedCardId) return;
+    if (!draggedPlacedCardId || !selectedProject) return;
+
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Get the card being dragged
-    const draggedCard = placedCards.find(card => card.id === draggedPlacedCardId);
+    const draggedCard = currentProject.placedCards.find(card => card.id === draggedPlacedCardId);
     if (!draggedCard) return;
 
+    const newPosition = { x, y };
+
     // Check for potential combinations
-    const cardsInCanvas = placedCards.filter(card => 
-      card.canvas === canvas && card.id !== draggedPlacedCardId
+    const cardToCombine = currentProject.placedCards.find(card => 
+      card.id !== draggedPlacedCardId && 
+      canCombineCards({ ...draggedCard, position: newPosition }, card)
     );
 
-    const newPosition = { x, y };
-    let newCards = [...placedCards];
-
-    // Check if the card can combine with any existing card
-    const cardToCombine = cardsInCanvas.find(card => 
-      canCombineCards(
-        { ...draggedCard, position: newPosition },
-        card
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: cardToCombine
+                ? [
+                    ...project.placedCards.filter(card => 
+                      card.id !== draggedPlacedCardId && card.id !== cardToCombine.id
+                    ),
+                    combineCards({ ...draggedCard, position: newPosition }, cardToCombine)
+                  ]
+                : project.placedCards.map(card => 
+                    card.id === draggedPlacedCardId
+                      ? { ...card, position: newPosition, canvas }
+                      : card
+                  )
+            }
+          : project
       )
     );
 
-    if (cardToCombine) {
-      // Remove both cards and add the combined card
-      newCards = newCards.filter(card => 
-        card.id !== draggedPlacedCardId && card.id !== cardToCombine.id
-      );
-      const combinedCard = combineCards(
-        { ...draggedCard, position: newPosition },
-        cardToCombine
-      );
-      newCards.push(combinedCard);
-    } else {
-      // Just update the position of the dragged card
-      newCards = newCards.map(card => 
-        card.id === draggedPlacedCardId
-          ? { ...card, position: newPosition, canvas }
-          : card
-      );
-    }
-
-    setPlacedCards(newCards);
     setIsDraggingPlacedCard(false);
     setDraggedPlacedCardId(null);
   };
@@ -326,6 +357,18 @@ export default function Home() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
+
+  // Get current project's cards and placed cards
+  const getCurrentProjectCards = () => {
+    if (!selectedProject) return { cards: [], placedCards: [] };
+    const project = projects.find(p => p.id === selectedProject);
+    return {
+      cards: project?.cards || [],
+      placedCards: project?.placedCards || []
+    };
+  };
+
+  const { cards, placedCards } = getCurrentProjectCards();
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -588,16 +631,16 @@ export default function Home() {
               </div>
 
               {/* Input box */}
-              <div className="p-3 flex gap-2 px-10">
+              <div className="p-3 flex gap-2 px-10 border-t border-gray-100">
                 <input
-                  className="flex-1 border text-black rounded-md px-3 py-2 text-sm outline-none"
+                  className="flex-1 border border-gray-200 text-black rounded-md px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Type your message..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                 />
                 <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+                  className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors shadow-md"
                   onClick={sendMessage}
                 >
                   Send
