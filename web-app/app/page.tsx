@@ -33,12 +33,14 @@ interface TimelineEvent {
   id: string;
   position: number;
   content: string;
+  time: string;
   type: 'action' | 'idea' | 'combine';
   placement: 'above' | 'below';
   cards: Array<{
     id: string;
     content: string;
     type: 'action' | 'idea' | 'combine';
+    time?: string;
   }>;
 }
 
@@ -71,166 +73,8 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([
-    { 
-      id: '1', 
-      name: 'Project Alpha', 
-      createdAt: new Date(),
-      timelineType: 'hours',
-      cards: [],
-      placedCards: [],
-      timelineEvents: [
-        {
-          id: '1',
-          position: 0.25,
-          content: `# Morning Meeting
-
-**Agenda:**
-- Project updates
-- Team sync
-- Action items
-
-*Location:* Conference Room A
-
-**Key Metrics:**
-- Progress: $\\frac{75}{100} = 75\\%$
-- Velocity: $v = \\frac{d}{t}$
-- Efficiency: $\\eta = \\frac{P_{out}}{P_{in}} \\times 100\\%$`,
-          type: 'action',
-          placement: 'above',
-          cards: []
-        },
-        {
-          id: '2',
-          position: 0.5,
-          content: `# Lunch Break
-
-**Schedule:**
-1. 12:00 - Team Lunch
-2. 13:00 - Quick Walk
-3. 13:30 - Back to Work
-
-**Health Metrics:**
-- Steps: $\\sum_{i=1}^{n} s_i$
-- Calories: $C = m \\times h \\times t$
-- Water Intake: $V = \\pi r^2h$`,
-          type: 'action',
-          placement: 'below',
-          cards: []
-        },
-        {
-          id: '3',
-          position: 0.75,
-          content: `# Project Review
-
-**Key Points:**
-- Budget Analysis
-- Timeline Assessment
-- Risk Evaluation
-
-**Financial Metrics:**
-- ROI: $ROI = \\frac{(Gain - Cost)}{Cost} \\times 100\\%$
-- NPV: $NPV = \\sum_{t=0}^{n} \\frac{R_t}{(1+i)^t}$
-- Break-even: $Q = \\frac{FC}{P-VC}$`,
-          type: 'action',
-          placement: 'above',
-          cards: []
-        }
-      ]
-    },
-    { 
-      id: '2', 
-      name: 'Project Beta', 
-      createdAt: new Date(),
-      timelineType: 'days',
-      cards: [],
-      placedCards: [],
-      timelineEvents: [
-        {
-          id: '1',
-          position: 0.2,
-          content: `# Team Sync
-
-**Agenda:**
-- Sprint Planning
-- Blockers Review
-- Resource Allocation
-
-**Sprint Metrics:**
-- Velocity: $v = \\frac{\\Delta x}{\\Delta t}$
-- Burndown: $B = \\sum_{i=1}^{n} (P_i - C_i)$
-- Capacity: $C = \\sum_{i=1}^{n} h_i \\times e_i$`,
-          type: 'action',
-          placement: 'above',
-          cards: []
-        },
-        {
-          id: '2',
-          position: 0.6,
-          content: `# Client Call
-
-**Discussion Points:**
-- Requirements Review
-- Timeline Updates
-- Budget Discussion
-
-**Project Metrics:**
-- Progress: $P = \\frac{C}{T} \\times 100\\%$
-- Risk Score: $R = \\sum_{i=1}^{n} (p_i \\times i_i)$
-- Quality Index: $Q = \\frac{\\sum_{i=1}^{n} q_i}{n}$`,
-          type: 'action',
-          placement: 'below',
-          cards: []
-        }
-      ]
-    },
-    { 
-      id: '3', 
-      name: 'Project Gamma', 
-      createdAt: new Date(),
-      timelineType: 'months',
-      cards: [],
-      placedCards: [],
-      timelineEvents: [
-        {
-          id: '1',
-          position: 0.3,
-          content: `# Q1 Review
-
-**Key Areas:**
-- Financial Performance
-- Operational Metrics
-- Strategic Goals
-
-**Financial Analysis:**
-- Growth Rate: $g = \\frac{(P_1 - P_0)}{P_0} \\times 100\\%$
-- Market Share: $MS = \\frac{S_i}{S_t} \\times 100\\%$
-- Profit Margin: $PM = \\frac{NP}{R} \\times 100\\%$`,
-          type: 'action',
-          placement: 'above',
-          cards: []
-        },
-        {
-          id: '2',
-          position: 0.7,
-          content: `# Q2 Planning
-
-**Strategic Focus:**
-- Market Expansion
-- Product Development
-- Team Growth
-
-**Planning Metrics:**
-- Market Size: $MS = \\sum_{i=1}^{n} (P_i \\times Q_i)$
-- Growth Potential: $GP = \\frac{(TAM - SAM)}{SAM} \\times 100\\%$
-- Resource Allocation: $RA = \\sum_{i=1}^{n} (r_i \\times t_i)$`,
-          type: 'action',
-          placement: 'below',
-          cards: []
-        }
-      ]
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+ 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectTimelineType, setNewProjectTimelineType] = useState<'hours' | 'days' | 'months' | 'custom'>('hours');
@@ -326,9 +170,12 @@ export default function Home() {
     const project = projects.find(p => p.id === selectedProject);
     if (!project) return { ticks: [] };
 
-    // Filter cards that have a valid time (type = 'idea' or 'combine')
-    const cardsWithTime = [...project.cards, ...project.placedCards].filter(
-      card => (card.type === 'idea' || card.type === 'combine') && card.time
+    const cardsWithTime: CardProps[] = [
+      ...project.cards,
+      ...project.placedCards,
+      ...project.timelineEvents.flatMap(event => event.cards),
+    ].filter((card): card is CardProps =>
+      (card.type === 'idea' || card.type === 'combine') && !!card.time
     );
 
     if (cardsWithTime.length < 2) return { ticks: [] };
@@ -336,14 +183,22 @@ export default function Home() {
     const times = cardsWithTime.map(card => new Date(card.time!).getTime());
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
+    const diffMs = maxTime - minTime;
 
-    if (minTime === maxTime) {
-      return {
-        ticks: [
-          { position: 0, label: new Date(minTime).toLocaleString(), isMajor: true },
-          { position: 1, label: new Date(maxTime).toLocaleString(), isMajor: true },
-        ]
-      };
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const ONE_MONTH = 30 * ONE_DAY;
+    const ONE_YEAR = 365 * ONE_DAY;
+
+    // Decide format based on time difference
+    let formatFn: (date: Date) => string;
+    if (diffMs > ONE_YEAR) {
+      formatFn = (date) => date.getFullYear().toString();
+    } else if (diffMs > ONE_MONTH) {
+      formatFn = (date) => date.toLocaleDateString(); // e.g. "Apr 20, 2025"
+    } else if (diffMs > ONE_DAY) {
+      formatFn = (date) => `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      formatFn = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     const numTicks = 5;
@@ -351,13 +206,15 @@ export default function Home() {
       const time = minTime + ((maxTime - minTime) * i) / (numTicks - 1);
       return {
         position: i / (numTicks - 1),
-        label: new Date(time).toLocaleTimeString(),
+        label: formatFn(new Date(time)),
         isMajor: i === 0 || i === numTicks - 1,
       };
     });
 
     return { ticks };
   };
+
+
 
   const handleDragStart = (card: CardProps) => {
     setDraggedCard(card);
@@ -446,24 +303,54 @@ export default function Home() {
         // Get new action cards from the agent
         const newCards = await fakeCombineCard(`Card placed on idea event: ${cardContent}`);
         
-        // Update the existing event while preserving its cards
-        setProjects(prevProjects => 
-          prevProjects.map(project => 
+        const returnedCard = newCards[0];
+
+        // Step 1: Replace the existing event with the new one
+        const newEvent: TimelineEvent = {
+          id: existingEvent.id,
+          time: returnedCard.time,
+          content: returnedCard.content,
+          type: returnedCard.type as 'combine' | 'idea' | 'action',
+          placement: existingEvent.placement,
+          cards: [returnedCard],
+          position: 0 // temporary, will be recalculated
+        };
+
+        // Step 2: Build a list of all events with the new one in place
+        const updatedEventsUnpositioned = currentProject.timelineEvents.map(event =>
+          event.id === existingEvent.id ? newEvent : event
+        );
+
+        // Step 3: Recalculate time-based positions
+        const allCardsWithTime = updatedEventsUnpositioned
+          .map(e => e.cards[0])
+          .filter(c => (c.type === 'idea' || c.type === 'combine') && !!c.time);
+
+        const times = allCardsWithTime.map(c => new Date(c.time!).getTime());
+        const minTime = Math.min(...times);
+        const maxTime = Math.max(...times);
+        const timeRange = maxTime - minTime || 1;
+
+        const updatedEvents = updatedEventsUnpositioned.map(event => {
+          const time = event.cards[0]?.time;
+          if (!time) return event;
+          const cardTime = new Date(time).getTime();
+          return {
+            ...event,
+            position: (cardTime - minTime) / timeRange
+          };
+        });
+
+        // Step 4: Update state
+        setProjects(prevProjects =>
+          prevProjects.map(project =>
             project.id === selectedProject
               ? {
-                  ...project,
-                  timelineEvents: project.timelineEvents.map(event => 
-                    event.id === existingEvent.id
-                      ? {
-                          ...existingEvent,
-                          content: cardContent,
-                          type: draggedCard?.type || 'combine',
-                        }
-                      : event
-                  ),
-                cards: [...project.cards, ...newCards],
-                  placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
-                }
+                ...project,
+                timelineEvents: updatedEvents,
+                cards: [],
+                placedCards: project.placedCards.filter(c => c.id !== draggedPlacedCardId),
+              }
               : project
           )
         );
@@ -472,6 +359,7 @@ export default function Home() {
         const newEvent: TimelineEvent = {
           id: Date.now().toString(),
           position: dropPosition,
+          time: new Date().toISOString(),
           content: cardContent,
           type: draggedCard?.type || 'action',
           placement: 'above',
@@ -481,18 +369,43 @@ export default function Home() {
         // Get new action cards from the agent
         const newCards = await fakeGeneratePlan(`Card placed on timeline event: ${cardContent}`);
 
-        setProjects(prevProjects => 
-          prevProjects.map(project => 
+        // Replace all previous timeline events
+        const allTimes = newCards
+          .filter((c: CardProps) => c.time)
+          .map((c: CardProps) => new Date(c.time!).getTime());
+
+        const minTime = Math.min(...allTimes);
+        const maxTime = Math.max(...allTimes);
+        const timeRange = maxTime - minTime || 1;
+
+        const newTimelineEvents: TimelineEvent[] = newCards
+          .filter((card: CardProps) => card.type === 'idea' && card.time)
+          .map((card: CardProps, index: number) => {
+            const time = new Date(card.time!).getTime();
+            return {
+              id: Date.now().toString() + index,
+              position: (time - minTime) / timeRange,
+              time: card.time,
+              content: card.content,
+              type: 'idea',
+              placement: index % 2 === 0 ? 'above' : 'below',
+              cards: [card],
+            };
+          });
+
+        setProjects(prevProjects =>
+          prevProjects.map(project =>
             project.id === selectedProject
               ? {
-                  ...project,
-                  timelineEvents: [...project.timelineEvents, newEvent],
-                  cards: newCards,
-                  placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
-                }
+                ...project,
+                timelineEvents: newTimelineEvents, // ✅ clear & replace
+                cards: [],                         // ✅ clear all cards
+                placedCards: [],                   // ✅ clear placed cards
+              }
               : project
           )
         );
+
       }
 
       // Clear drag states

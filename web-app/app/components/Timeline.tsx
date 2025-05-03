@@ -14,6 +14,7 @@ interface Tick {
 interface TimelineEvent {
   id: string;
   position: number; // 0 to 1 representing position on timeline
+  time: string;
   content: string;
   type: 'action' | 'idea' | 'combine';
   placement: 'above' | 'below';
@@ -158,6 +159,10 @@ export default function Timeline({
                   >
                     {event.content}
                   </ReactMarkdown>
+                </div>
+
+                <div className="text-xs text-gray-400 mt-2">
+                  Time: {new Date(event.time).toLocaleString()}
                 </div>
                 
                 {/* Event cards */}
