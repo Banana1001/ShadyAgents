@@ -952,6 +952,7 @@ def run_combine_workflow(
         print("\n--- Combine Workflow Finished (No final state message found) ---")
         final_result = "Workflow finished without a final message." # Or return None
 
+    print(f"Final result: {type(final_result)}")
     # ** The post-workflow removal block that was here is REMOVED **
 
 

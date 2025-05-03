@@ -2,83 +2,58 @@
   "in_timeline": [
     {
       "card_type": "IdeaCard",
-      "title": "Opening Ceremony and Theme Introduction",
-      "description": "Kick off the hackathon with an enhanced opening ceremony featuring keynote speakers, multimedia presentations, and premium event setup to introduce the banking innovation theme, event goals, and schedule.",
+      "title": "Streamlined Opening Ceremony",
+      "description": "Kick off the hackathon with keynote speakers and multimedia presentations introducing the banking innovation theme and event goals.",
       "budget": 800,
       "time": "2024-07-01T09:00:00",
-      "id": "card-idea-803c24",
-      "created_at": "2025-05-03T13:37:43.520595+00:00"
+      "id": "card-idea-7fef64",
+      "created_at": "2025-05-03T14:12:59.706787+00:00"
     },
     {
       "card_type": "IdeaCard",
-      "title": "Banking Innovation Challenges",
-      "description": "Present participants with advanced creative challenges including digital payment solutions, AI-based fraud detection, customer experience improvements, and blockchain applications with expert panels and prize incentives.",
+      "title": "Impactful Innovation Challenges",
+      "description": "Engage participants with selected key challenges in digital payments, AI fraud detection, and blockchain applications with expert panels.",
       "budget": 600,
       "time": "2024-07-01T10:00:00",
-      "id": "card-idea-f7700c",
-      "created_at": "2025-05-03T13:37:43.520595+00:00"
+      "id": "card-idea-c473dc",
+      "created_at": "2025-05-03T14:12:59.706787+00:00"
     },
     {
       "card_type": "IdeaCard",
-      "title": "Mentorship and Workshops",
-      "description": "Offer extended expert-led workshops and mentorship sessions featuring fintech trends, regulatory compliance, advanced technical skills, and hands-on labs, supported by industry leaders and premium learning materials.",
+      "title": "Focused Mentorship Workshops",
+      "description": "Provide expert-led workshops on fintech trends, regulatory compliance, and hands-on labs to enhance participant skills.",
       "budget": 1200,
       "time": "2024-07-01T13:00:00",
-      "id": "card-idea-efb53f",
-      "created_at": "2025-05-03T13:37:43.520595+00:00"
+      "id": "card-idea-c967fa",
+      "created_at": "2025-05-03T14:12:59.707791+00:00"
     },
     {
       "card_type": "IdeaCard",
-      "title": "Networking and Team Building Activities",
-      "description": "Facilitate networking sessions with professional facilitators, interactive icebreakers, and team-building exercises designed to foster collaboration and idea sharing, including social mixers with refreshments.",
+      "title": "Networking and Team Building",
+      "description": "Facilitate professional networking sessions and interactive team-building exercises to foster collaboration and idea sharing.",
       "budget": 700,
       "time": "2024-07-01T15:30:00",
-      "id": "card-idea-b297cc",
-      "created_at": "2025-05-03T13:37:43.520595+00:00"
+      "id": "card-idea-c6b8a0",
+      "created_at": "2025-05-03T14:12:59.707791+00:00"
     },
     {
       "card_type": "IdeaCard",
-      "title": "Project Development and Check-ins",
-      "description": "Provide dedicated workspaces, extended development time, and regular expert check-ins for feedback and guidance to support high-quality project creation.",
+      "title": "Project Development with Expert Check-ins",
+      "description": "Offer dedicated workspaces and regular expert feedback sessions to support high-quality project development.",
       "budget": 300,
       "time": "2024-07-01T16:30:00",
-      "id": "card-idea-2473b0",
-      "created_at": "2025-05-03T13:37:43.520595+00:00"
+      "id": "card-idea-aa207a",
+      "created_at": "2025-05-03T14:12:59.707791+00:00"
     },
     {
       "card_type": "IdeaCard",
-      "title": "Final Presentations and Judging",
-      "description": "Organize a professional presentation session with high-quality AV equipment, a panel of expert judges, and audience engagement to evaluate projects on innovation, feasibility, and impact.",
-      "budget": 900,
+      "title": "Combined Final Presentation and Award Ceremony",
+      "description": "Organize a professional session with expert judging, audience engagement, and elegant award presentation celebrating participants.",
+      "budget": 1800,
       "time": "2024-07-02T10:00:00",
-      "id": "card-idea-6c010e",
-      "created_at": "2025-05-03T13:37:43.521595+00:00"
-    },
-    {
-      "card_type": "IdeaCard",
-      "title": "Award Ceremony and Closing Remarks",
-      "description": "Host an elegant award ceremony with high-value prizes, trophies, and closing remarks celebrating the event's success and outlining next steps for participants.",
-      "budget": 900,
-      "time": "2024-07-02T13:00:00",
-      "id": "card-idea-2da6b2",
-      "created_at": "2025-05-03T13:37:43.521595+00:00"
-    },
-    {
-      "card_type": "IdeaCard",
-      "title": "Premium Catering and Refreshments",
-      "description": "Provide premium catering including gourmet snacks, specialty coffee, full meals, and refreshments to keep participants energized and satisfied throughout the event.",
-      "budget": 1500,
-      "time": "2024-07-01T09:00:00",
-      "id": "card-idea-caa0e6",
-      "created_at": "2025-05-03T13:37:43.521595+00:00"
+      "id": "card-idea-fd0496",
+      "created_at": "2025-05-03T14:12:59.707791+00:00"
     }
   ],
-  "out_timeline": [
-    {
-      "id": "card-custom-be2f06",
-      "card_type": "CustomCard",
-      "user_query": "make the plan shorter",
-      "created_at": "2025-05-03T13:37:56.707206+00:00"
-    }
-  ]
+  "out_timeline": []
 }
