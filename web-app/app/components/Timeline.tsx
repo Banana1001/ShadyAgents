@@ -51,6 +51,7 @@ export default function Timeline({
   onEventDragLeave
 }: TimelineProps) {
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -67,6 +68,7 @@ export default function Timeline({
   };
 
   const toggleEvent = (eventId: string) => {
+    setActiveEventId(eventId);
     setExpandedEvents(prev => {
       const newSet = new Set(prev);
       if (newSet.has(eventId)) {
@@ -106,33 +108,19 @@ export default function Timeline({
       {events.map((event) => (
         <div
           key={event.id}
-          className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-10"
+          className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2"
           style={{ 
             left: `calc(${leftMargin}px + ${event.position * (100 - (leftMargin + rightMargin) / 16)}%)`,
-            top: event.placement === 'above' ? '50%' : '50%'
+            top: event.placement === 'above' ? '50%' : '50%',
+            zIndex: activeEventId === event.id ? 50 : 10
           }}
         >
           <div 
             className={`bg-white shadow-md rounded-lg w-[320px] ${
               event.placement === 'above' ? '-mt-20' : 'mt-32'
-            } transition-all duration-200 hover:shadow-xl hover:scale-105 overflow-hidden ${
-              dragOverTarget?.type === 'event' && dragOverTarget?.id === event.id ? 'ring-4 ring-green-500 scale-105' : ''
-            }`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEventDragOver?.(e, event.id);
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEventDragLeave?.();
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDrop(e, event.id);
-            }}
+            } transition-all duration-200 hover:shadow-xl hover:scale-105 overflow-hidden`}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, event.id)}
           >
             {/* Event header */}
             <div 
