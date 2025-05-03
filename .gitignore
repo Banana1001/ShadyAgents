@@ -172,3 +172,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+/web-app/node_modules/
+/web-app/.next/
+/web-app/out/
+/web-app/.vercel/
+/backend/test1.py
