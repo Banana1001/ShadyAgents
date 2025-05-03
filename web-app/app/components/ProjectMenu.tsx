@@ -1,15 +1,21 @@
+'use client';
 import { useState, useRef, useEffect } from 'react';
 import { downloadCalendar } from '../utils/calendar';
 import { TimelineEvent } from '../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { saveProjectStructure } from '../../services/firebase';
 
 interface ProjectMenuProps {
   projectName: string;
   events: TimelineEvent[];
+  projects: any[];
 }
 
-export default function ProjectMenu({ projectName, events }: ProjectMenuProps) {
+export default function ProjectMenu({ projectName, events, projects }: ProjectMenuProps) {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -27,8 +33,20 @@ export default function ProjectMenu({ projectName, events }: ProjectMenuProps) {
     setIsOpen(false);
   };
 
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      await saveProjectStructure(user.uid, projects);
+    } catch (error) {
+      console.error('Error saving:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative flex items-center gap-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -51,6 +69,18 @@ export default function ProjectMenu({ projectName, events }: ProjectMenuProps) {
           </button>
         </div>
       )}
+
+      <button
+        onClick={handleSave}
+        disabled={isSaving}
+        className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+          isSaving
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl'
+        }`}
+      >
+        {isSaving ? 'Saving...' : 'Save'}
+      </button>
     </div>
   );
 } 

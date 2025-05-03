@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import Timeline from './components/Timeline';
 import Card, {CardProps} from './components/Card';
 import ProjectMenu from './components/ProjectMenu';
+import { useAuth } from '../contexts/AuthContext';
+import Auth from './components/Auth';
+import { getProjectStructure, saveProjectStructure } from '../services/firebase';
 
 // Remove unused timeline configurations
 interface TimelineEvent {
@@ -44,11 +47,11 @@ interface PlacedCard extends CardProps {
 }
 
 export default function Home() {
+  const { user, loading, logout } = useAuth();
   const [input, setInput] = useState('');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
- 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
@@ -59,15 +62,40 @@ export default function Home() {
   const [heldCardId, setHeldCardId] = useState<string | null>(null);
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isDraggingOverTrash, setIsDraggingOverTrash] = useState(false);
-  const TRASH_DELETE_DISTANCE = 100; // Distance in pixels to trigger deletion
-
-  const COMBINE_DISTANCE = 50; // Distance in pixels to trigger combination
-  const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
-
   const [dragOverTarget, setDragOverTarget] = useState<{
     type: 'card' | 'event' | 'timeline' | null;
     id?: string;
   }>({ type: null });
+
+  const COMBINE_DISTANCE = 50; // Distance in pixels to trigger combination
+  const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
+
+  // Load projects when user changes
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (user && !loading) {
+        try {
+          const loadedProjects = await getProjectStructure(user.uid);
+          if (loadedProjects && Array.isArray(loadedProjects)) {
+            setProjects(loadedProjects);
+          }
+        } catch (error) {
+          console.error('Error loading projects:', error);
+        }
+      }
+    };
+
+    loadProjects();
+  }, [user, loading]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
 
   const sendMessage = async () => {
     if (!input.trim() || !selectedProject) return;
@@ -119,10 +147,9 @@ export default function Home() {
     return (data.cards);
   };
 
-
-
-  const handleCreateProject = () => {
-    if (newProjectName.trim()) {
+  // Update handleCreateProject to save to Firebase
+  const handleCreateProject = async () => {
+    if (newProjectName.trim() && user) {
       const newProject: Project = {
         id: Date.now().toString(),
         name: newProjectName.trim(),
@@ -132,21 +159,59 @@ export default function Home() {
         placedCards: [],
         timelineEvents: []
       };
-      setProjects([...projects, newProject]);
+
+      const updatedProjects = [...projects, newProject];
+      setProjects(updatedProjects);
       setSelectedProject(newProject.id);
       setNewProjectName('');
       setNewProjectDescription('');
       setCustomTicks([]);
       setIsCreatingProject(false);
+
+      // Save to Firebase
+      try {
+        await saveProjectStructure(user.uid, updatedProjects.map(project => ({
+          ...project,
+          createdAt: project.createdAt instanceof Date ? project.createdAt.toISOString() : new Date().toISOString()
+        })));
+      } catch (error) {
+        console.error('Error saving project:', error);
+      }
     }
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(projects.filter(p => p.id !== projectId));
+  // Update handleDeleteProject to save to Firebase
+  const handleDeleteProject = async (projectId: string) => {
+    if (!user) return;
+
+    const updatedProjects = projects.filter(p => p.id !== projectId);
+    setProjects(updatedProjects);
+    
     if (selectedProject === projectId) {
       setSelectedProject(null);
     }
+
+    // Save to Firebase
+    try {
+      await saveProjectStructure(user.uid, updatedProjects);
+    } catch (error) {
+      console.error('Error saving after project deletion:', error);
+    }
   };
+
+  // Add loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // Add auth check
+  if (!user) {
+    return <Auth />;
+  }
 
   // Get timeline configuration based on selected project
   const getTimelineConfig = () => {
@@ -155,8 +220,6 @@ export default function Home() {
       rightMargin: 60
     };
   };
-
-
 
   const handleDragStart = (card: CardProps) => {
     setDraggedCard(card);
@@ -681,15 +744,6 @@ export default function Home() {
     setHeldCardId(null);
   };
 
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (holdTimerRef.current) {
-        clearTimeout(holdTimerRef.current);
-      }
-    };
-  }, []);
-
   const handleCardDragOver = (e: React.DragEvent, cardId: string) => {
     e.preventDefault();
     setDragOverTarget({ type: 'card', id: cardId });
@@ -764,6 +818,23 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-gray-700/50">
+          <button
+            onClick={logout}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+              isSidebarCollapsed 
+                ? 'text-gray-400 hover:text-white hover:bg-gray-700/50' 
+                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+            }`}
+          >
+            {!isSidebarCollapsed && <span>Logout</span>}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Project Creation Modal - Moved outside sidebar */}
@@ -813,6 +884,7 @@ export default function Home() {
             <ProjectMenu
               projectName={projects.find(p => p.id === selectedProject)?.name || ''}
               events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
+              projects={projects}
             />
           )}
         </div>

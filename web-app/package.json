@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "firebase": "^11.6.1",
+    "firebase-tools": "^14.2.2",
     "katex": "^0.16.22",
     "next": "15.3.1",
     "react": "^19.0.0",
