@@ -84,7 +84,7 @@ export default function Timeline({
   };
 
   return (
-    <div className={`h-16 bg-gradient-to-b from-gray-800 to-gray-900 relative w-full ${className}`}>
+    <div className={`h-16 bg-gradient-to-b from-gray-800 to-gray-900 relative w-full rounded-2xl ${className}`}>
       {/* Main timeline line */}
       <div 
         className="absolute h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 top-1/2 transform -translate-y-1/2"

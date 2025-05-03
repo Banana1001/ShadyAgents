@@ -462,21 +462,34 @@ export default function Home() {
     setDraggedCard(null);
   };
 
-  const handlePlacedCardDragStart = (e: React.DragEvent, cardId: string) => {
+  const handlePlacedCardDragStart = (e: React.DragEvent<HTMLDivElement>, cardId: string) => {
     setIsDraggingPlacedCard(true);
     setDraggedPlacedCardId(cardId);
-    // Set a custom drag image to make it look better
+    
+    // Create a custom drag image
     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
+    dragImage.style.width = '250px'; // Match the card width
     document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    
+    // Set the drag image offset to be at the cursor position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    e.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+    
+    // Hide the original card
+    e.currentTarget.style.opacity = '0';
+    
     setTimeout(() => document.body.removeChild(dragImage), 0);
   };
 
-  const handlePlacedCardDragEnd = () => {
+  const handlePlacedCardDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     setIsDraggingPlacedCard(false);
     setDraggedPlacedCardId(null);
+    // Restore the original card's opacity
+    e.currentTarget.style.opacity = '1';
   };
 
   const handlePlacedCardDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
@@ -879,18 +892,20 @@ export default function Home() {
 
               {/* Timeline axis with drop zone */}
               <div 
-                className="relative mx-6 my-4 rounded-2xl border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-lg z-50 overflow-hidden"
+                className="relative mx-6 my-4 rounded-2xl border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-lg z-50"
                 onDragOver={handleDragOver}
                 onDrop={handleAxisDrop}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 opacity-0 hover:opacity-100 transition-opacity pointer-events-none rounded-2xl" />
-                <Timeline 
-                  {...getTimelineConfig()}
-                  leftMargin={60}
-                  rightMargin={60}
-                  events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
-                  onEventDrop={handleEventDrop}
-                />
+                <div className="relative">
+                  <Timeline 
+                    {...getTimelineConfig()}
+                    leftMargin={60}
+                    rightMargin={60}
+                    events={projects.find(p => p.id === selectedProject)?.timelineEvents || []}
+                    onEventDrop={handleEventDrop}
+                  />
+                </div>
               </div>
 
               {/* Bottom canvas area */}
