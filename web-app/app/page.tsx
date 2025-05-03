@@ -539,6 +539,35 @@ export default function Home() {
 
   const { cards, placedCards } = getCurrentProjectCards();
 
+  const handleCardDoubleClick = (card: CardProps, canvas: 'top' | 'bottom') => {
+    if (!selectedProject) return;
+
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
+    // Calculate a random position within the canvas
+    const x = Math.random() * (window.innerWidth - 300) + 150; // Keep away from edges
+    const y = Math.random() * (window.innerHeight / 2 - 100) + 50; // Keep away from edges
+
+    const newCard: PlacedCard = {
+      ...card,
+      id: Date.now().toString(),
+      position: { x, y },
+      canvas
+    };
+
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: [...project.placedCards, newCard]
+            }
+          : project
+      )
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left Sidebar */}
@@ -740,7 +769,11 @@ export default function Home() {
                         transform: 'translate(-50%, -50%)'
                       }}
                     >
-                      <Card type={card.type} content={card.content} />
+                      <Card 
+                        type={card.type} 
+                        content={card.content} 
+                        onDoubleClick={() => handleCardDoubleClick(card, 'top')}
+                      />
                     </div>
                   ))}
               </div>
@@ -784,7 +817,11 @@ export default function Home() {
                         transform: 'translate(-50%, -50%)'
                       }}
                     >
-                      <Card type={card.type} content={card.content} />
+                      <Card 
+                        type={card.type} 
+                        content={card.content} 
+                        onDoubleClick={() => handleCardDoubleClick(card, 'bottom')}
+                      />
                     </div>
                   ))}
               </div>
@@ -803,7 +840,11 @@ export default function Home() {
                       onDragEnd={handleDragEnd}
                       className="cursor-move"
                     >
-                      <Card type={card.type} content={card.content} />
+                      <Card 
+                        type={card.type} 
+                        content={card.content} 
+                        onDoubleClick={() => handleCardDoubleClick(card, 'top')}
+                      />
                     </div>
                   ))}
                 </div>
