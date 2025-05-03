@@ -48,7 +48,8 @@ def generate_ideas(n=5):
         idea = {
             'type': 'idea',
             'content': f'idea {random.randint(1, 100)}',
-            'time': random_time.isoformat()
+            'time': random_time.isoformat(),
+            'cost': random.randint(1, 1000)
         }
         ideas.append(idea)
     return ideas
@@ -60,4 +61,4 @@ async def generate_plan(request: MessageRequest):
 
 @app.post("/combine-cards")
 async def combine_cards(request: MessageRequest):
-    return {'cards': [{'type': 'combine', 'content': f'idea {random.randint(1, 100)}', 'time': datetime.datetime.now().isoformat()}]}
+    return {'cards': [{'type': 'combine', 'content': f'idea {random.randint(1, 100)}', 'time': datetime.datetime.now().isoformat(), 'cost': random.randint(1, 1000)}]}
