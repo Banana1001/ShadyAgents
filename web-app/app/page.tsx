@@ -45,11 +45,22 @@ interface Project {
     label?: string;
     isMajor?: boolean;
   }>;
+  cards: CardProps[];
+  placedCards: PlacedCard[];
+}
+
+interface PlacedCard extends CardProps {
+  id: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  canvas: 'top' | 'bottom';
+  combinedCards?: string[]; // Track IDs of cards that were combined
 }
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [cards, setCards] = useState<CardProps[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [projects, setProjects] = useState<Project[]>([
@@ -57,36 +68,55 @@ export default function Home() {
       id: '1', 
       name: 'Project Alpha', 
       createdAt: new Date(),
-      timelineType: 'hours'
+      timelineType: 'hours',
+      cards: [],
+      placedCards: []
     },
     { 
       id: '2', 
       name: 'Project Beta', 
       createdAt: new Date(),
-      timelineType: 'days'
+      timelineType: 'days',
+      cards: [],
+      placedCards: []
     },
     { 
       id: '3', 
       name: 'Project Gamma', 
       createdAt: new Date(),
-      timelineType: 'months'
+      timelineType: 'months',
+      cards: [],
+      placedCards: []
     },
   ]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectTimelineType, setNewProjectTimelineType] = useState<'hours' | 'days' | 'months' | 'custom'>('hours');
   const [customTicks, setCustomTicks] = useState<Array<{ position: number; label?: string; isMajor?: boolean }>>([]);
+  const [draggedCard, setDraggedCard] = useState<CardProps | null>(null);
+  const [isDraggingPlacedCard, setIsDraggingPlacedCard] = useState(false);
+  const [draggedPlacedCardId, setDraggedPlacedCardId] = useState<string | null>(null);
+
+  const COMBINE_DISTANCE = 50; // Distance in pixels to trigger combination
+  const AXIS_ZONE_HEIGHT = 40; // Height of the detection zone around the axis
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !selectedProject) return;
 
     const messageToSend = input;
     setInput(''); // Clear input immediately
 
     // TODO: Replace this with real agent call
-    const cards = await fakeAgentCall(messageToSend);
+    const newCards = await fakeAgentCall(messageToSend);
 
-    setCards(cards);
+    // Update cards for the selected project
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? { ...project, cards: newCards }
+          : project
+      )
+    );
   };
 
   // Fake agent for demo purposes
@@ -109,7 +139,9 @@ export default function Home() {
         name: newProjectName.trim(),
         createdAt: new Date(),
         timelineType: newProjectTimelineType,
-        ...(newProjectTimelineType === 'custom' && { customTicks })
+        ...(newProjectTimelineType === 'custom' && { customTicks }),
+        cards: [],
+        placedCards: []
       };
       setProjects([...projects, newProject]);
       setSelectedProject(newProject.id);
@@ -144,8 +176,208 @@ export default function Home() {
     return { ticks: [] };
   };
 
+  const handleDragStart = (card: CardProps) => {
+    setDraggedCard(card);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedCard(null);
+  };
+
+  const canCombineCards = (card1: PlacedCard, card2: PlacedCard) => {
+    const dx = card1.position.x - card2.position.x;
+    const dy = card1.position.y - card2.position.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < COMBINE_DISTANCE;
+  };
+
+  const combineCards = (card1: PlacedCard, card2: PlacedCard): PlacedCard => {
+    const combinedContent = `${card1.content}\n\n${card2.content}`;
+    const combinedIds = [
+      ...(card1.combinedCards || [card1.id]),
+      ...(card2.combinedCards || [card2.id])
+    ];
+
+    return {
+      id: Date.now().toString(),
+      type: 'action',
+      content: combinedContent,
+      position: {
+        x: (card1.position.x + card2.position.x) / 2,
+        y: (card1.position.y + card2.position.y) / 2
+      },
+      canvas: card1.canvas,
+      combinedCards: combinedIds
+    };
+  };
+
+  const isNearAxis = (y: number, canvasHeight: number, isTopCanvas: boolean) => {
+    if (isTopCanvas) {
+      return y > canvasHeight - AXIS_ZONE_HEIGHT;
+    } else {
+      return y < AXIS_ZONE_HEIGHT;
+    }
+  };
+
+  const handleAxisDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!selectedProject) return;
+
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
+    const cardContent = draggedCard 
+      ? draggedCard.content 
+      : currentProject.placedCards.find(card => card.id === draggedPlacedCardId)?.content;
+
+    if (cardContent) {
+      const newCards = await fakeAgentCall(`refresh`);
+      
+      // Update project with new cards and remove the placed card
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project.id === selectedProject
+            ? {
+                ...project,
+                cards: newCards,
+                placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
+              }
+            : project
+        )
+      );
+
+      // Clear drag states
+      setDraggedCard(null);
+      setDraggedPlacedCardId(null);
+      setIsDraggingPlacedCard(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
+    e.preventDefault();
+    if (!draggedCard || !selectedProject) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
+    const newCard: PlacedCard = {
+      ...draggedCard,
+      id: Date.now().toString(),
+      position: { x, y },
+      canvas
+    };
+
+    // Check for potential combinations
+    const cardToCombine = currentProject.placedCards.find(card => 
+      canCombineCards(newCard, card)
+    );
+
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: cardToCombine
+                ? [
+                    ...project.placedCards.filter(card => card.id !== cardToCombine.id),
+                    combineCards(newCard, cardToCombine)
+                  ]
+                : [...project.placedCards, newCard]
+            }
+          : project
+      )
+    );
+
+    setDraggedCard(null);
+  };
+
+  const handlePlacedCardDragStart = (e: React.DragEvent, cardId: string) => {
+    setIsDraggingPlacedCard(true);
+    setDraggedPlacedCardId(cardId);
+    // Set a custom drag image to make it look better
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
+  };
+
+  const handlePlacedCardDragEnd = () => {
+    setIsDraggingPlacedCard(false);
+    setDraggedPlacedCardId(null);
+  };
+
+  const handlePlacedCardDrop = async (e: React.DragEvent, canvas: 'top' | 'bottom') => {
+    e.preventDefault();
+    if (!draggedPlacedCardId || !selectedProject) return;
+
+    const currentProject = projects.find(p => p.id === selectedProject);
+    if (!currentProject) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const draggedCard = currentProject.placedCards.find(card => card.id === draggedPlacedCardId);
+    if (!draggedCard) return;
+
+    const newPosition = { x, y };
+
+    // Check for potential combinations
+    const cardToCombine = currentProject.placedCards.find(card => 
+      card.id !== draggedPlacedCardId && 
+      canCombineCards({ ...draggedCard, position: newPosition }, card)
+    );
+
+    setProjects(prevProjects => 
+      prevProjects.map(project => 
+        project.id === selectedProject
+          ? {
+              ...project,
+              placedCards: cardToCombine
+                ? [
+                    ...project.placedCards.filter(card => 
+                      card.id !== draggedPlacedCardId && card.id !== cardToCombine.id
+                    ),
+                    combineCards({ ...draggedCard, position: newPosition }, cardToCombine)
+                  ]
+                : project.placedCards.map(card => 
+                    card.id === draggedPlacedCardId
+                      ? { ...card, position: newPosition, canvas }
+                      : card
+                  )
+            }
+          : project
+      )
+    );
+
+    setIsDraggingPlacedCard(false);
+    setDraggedPlacedCardId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  // Get current project's cards and placed cards
+  const getCurrentProjectCards = () => {
+    if (!selectedProject) return { cards: [], placedCards: [] };
+    const project = projects.find(p => p.id === selectedProject);
+    return {
+      cards: project?.cards || [],
+      placedCards: project?.placedCards || []
+    };
+  };
+
+  const { cards, placedCards } = getCurrentProjectCards();
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Left Sidebar */}
       <div 
         className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-800 text-white flex flex-col transition-all duration-300 ease-in-out`}
@@ -315,26 +547,41 @@ export default function Home() {
             {/* Main content area with timeline and canvases */}
             <div className="flex-1 flex flex-col">
               {/* Top canvas area */}
-              <div className="flex-1 bg-white border-b border-gray-200">
+              <div 
+                className="flex-1 bg-white border-b border-gray-200 shadow-inner relative"
+                onDragOver={handleDragOver}
+                onDrop={(e) => isDraggingPlacedCard ? handlePlacedCardDrop(e, 'top') : handleDrop(e, 'top')}
+              >
+                {placedCards
+                  .filter(card => card.canvas === 'top')
+                  .map(card => (
+                    <div
+                      key={card.id}
+                      draggable
+                      onDragStart={(e) => handlePlacedCardDragStart(e, card.id)}
+                      onDragEnd={handlePlacedCardDragEnd}
+                      className={`absolute cursor-move transition-shadow ${
+                        draggedPlacedCardId === card.id ? 'opacity-50' : 'hover:shadow-lg'
+                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
+                      style={{
+                        left: card.position.x,
+                        top: card.position.y,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    >
+                      <Card type={card.type} content={card.content} />
+                    </div>
+                  ))}
               </div>
 
-              {/* Timeline axis */}
-              <div
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  const data = e.dataTransfer.getData('text/plain');
-                  try {
-                    const droppedCard = JSON.parse(data);
-                    const newCards = await fakeAgentCall(`refresh`);
-                    setCards(newCards);
-                  } catch (err) {
-                    console.error('Invalid drop payload:', err);
-                  }
-                }}
-                className="relative z-10"
+              {/* Timeline axis with drop zone */}
+              <div 
+                className="relative"
+                onDragOver={handleDragOver}
+                onDrop={handleAxisDrop}
               >
-                <Timeline
+                <div className="absolute inset-0 bg-blue-50 opacity-0 hover:opacity-20 transition-opacity pointer-events-none" />
+                <Timeline 
                   {...getTimelineConfig()}
                   leftMargin={60}
                   rightMargin={60}
@@ -342,18 +589,49 @@ export default function Home() {
               </div>
 
               {/* Bottom canvas area */}
-              <div className="flex-1 bg-white border-t border-gray-200">
+              <div
+                className="flex-1 bg-white border-t border-gray-200 shadow-inner relative"
+                onDragOver={handleDragOver}
+                onDrop={(e) => isDraggingPlacedCard ? handlePlacedCardDrop(e, 'bottom') : handleDrop(e, 'bottom')}
+              >
+                {placedCards
+                  .filter(card => card.canvas === 'bottom')
+                  .map(card => (
+                    <div
+                      key={card.id}
+                      draggable
+                      onDragStart={(e) => handlePlacedCardDragStart(e, card.id)}
+                      onDragEnd={handlePlacedCardDragEnd}
+                      className={`absolute cursor-move transition-shadow ${
+                        draggedPlacedCardId === card.id ? 'opacity-50' : 'hover:shadow-lg'
+                      } ${card.combinedCards ? 'ring-2 ring-blue-500' : ''}`}
+                      style={{
+                        left: card.position.x,
+                        top: card.position.y,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    >
+                      <Card type={card.type} content={card.content} />
+                    </div>
+                  ))}
               </div>
             </div>
 
             {/* Chat section */}
-            <div className="border-t border-gray-200">
-              {/* Display response */}
+            <div className="border-t border-gray-200 bg-white shadow-lg">
               {/* Horizontal action card row */}
               <div className="px-4 pb-3">
-                <div className="flex gap-4 justify-center flex-wrap">
+                <div className="flex gap-4 overflow-x-auto py-4">
                   {cards.map((card, index) => (
-                    <Card key={index} type={card.type} content={card.content} />
+                    <div
+                      key={index}
+                      draggable
+                      onDragStart={() => handleDragStart(card)}
+                      onDragEnd={handleDragEnd}
+                      className="cursor-move"
+                    >
+                      <Card type={card.type} content={card.content} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -395,16 +673,16 @@ export default function Home() {
 
 
               {/* Input box */}
-              <div className="p-3 flex gap-2 px-10">
+              <div className="p-3 flex gap-2 px-10 border-t border-gray-100">
                 <input
-                  className="flex-1 border text-black rounded-md px-3 py-2 text-sm outline-none"
+                  className="flex-1 border border-gray-200 text-black rounded-md px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Type your message..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                 />
                 <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+                  className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors shadow-md"
                   onClick={sendMessage}
                 >
                   Send
