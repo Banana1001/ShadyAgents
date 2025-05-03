@@ -16,7 +16,8 @@
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "web-app": "file:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

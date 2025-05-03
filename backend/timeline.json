@@ -1,0 +1,338 @@
+{
+  "in_timeline": [
+    {
+      "id": "card-idea-default",
+      "card_type": "IdeaCard",
+      "title": "Weekend Trip Example",
+      "description": "A sample idea card for a weekend getaway.",
+      "budget": "Medium",
+      "time": "Weekend",
+      "created_at": "2025-05-03T11:22:16.082697+00:00"
+    },
+    {
+      "id": "card-idea-afcc4b",
+      "card_type": "IdeaCard",
+      "title": "Interactive Workshop",
+      "description": "Host a dynamic workshop where attendees can collaborate and learn new skills related to the event's theme.",
+      "budget": "650",
+      "time": "Day",
+      "created_at": "2025-05-03T11:22:16.084699+00:00"
+    },
+    {
+      "id": "card-idea-0177cb",
+      "card_type": "IdeaCard",
+      "title": "Engagement Games",
+      "description": "Organize fun and competitive games that encourage networking and interaction among participants.",
+      "budget": "300",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:22:16.084699+00:00"
+    },
+    {
+      "id": "card-idea-6eeccc",
+      "card_type": "IdeaCard",
+      "title": "Live Polling & Q&A",
+      "description": "Set up a live polling session during the event where attendees can submit questions and vote on topics of interest.",
+      "budget": "100",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:22:16.084699+00:00"
+    },
+    {
+      "id": "card-idea-9d15b4",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop on April 11",
+      "description": "A hands-on workshop where participants can brainstorm and create innovative projects, using the budget for materials and refreshments.",
+      "budget": "669",
+      "time": "Day",
+      "created_at": "2025-05-03T11:22:23.601418+00:00"
+    },
+    {
+      "id": "card-idea-ce4116",
+      "card_type": "IdeaCard",
+      "title": "Outdoor Team Strategy Day",
+      "description": "A day dedicated to outdoor team-building activities and strategic planning, utilizing the budget for space rental and equipment.",
+      "budget": "669",
+      "time": "Day",
+      "created_at": "2025-05-03T11:22:23.602417+00:00"
+    },
+    {
+      "id": "card-idea-ef310a",
+      "card_type": "IdeaCard",
+      "title": "April 11th Innovation Hackathon",
+      "description": "An innovation hackathon where teams compete to develop new ideas, with the budget allocated for prizes and food.",
+      "budget": "669",
+      "time": "Day",
+      "created_at": "2025-05-03T11:22:23.602417+00:00"
+    },
+    {
+      "id": "card-idea-4535a5",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Day",
+      "description": "A day dedicated to brainstorming and developing innovative ideas through guided activities and group discussions.",
+      "budget": "543",
+      "time": "Day",
+      "created_at": "2025-05-03T11:29:35.366249+00:00"
+    },
+    {
+      "id": "card-idea-f71dfe",
+      "card_type": "IdeaCard",
+      "title": "Idea Pitch Evening",
+      "description": "An evening event where participants pitch their project ideas in a friendly competition format, fostering creativity and collaboration.",
+      "budget": "500",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:29:35.366249+00:00"
+    },
+    {
+      "id": "card-idea-8afdd6",
+      "card_type": "IdeaCard",
+      "title": "Feedback and Pizza Night",
+      "description": "An informal gathering where participants share their ideas over pizza, receive feedback, and collaborate on improvements.",
+      "budget": "180",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:29:35.366249+00:00"
+    },
+    {
+      "id": "card-idea-9f5ccb",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Evening",
+      "description": "A fun evening where participants engage in various creative activities, like painting or crafting, to unwind and express themselves.",
+      "budget": "543",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:29:41.397276+00:00"
+    },
+    {
+      "id": "card-idea-ca22d9",
+      "card_type": "IdeaCard",
+      "title": "Team Innovation Challenge",
+      "description": "Gather teams for a competition where they develop innovative solutions to a challenge, encouraging collaboration and creativity.",
+      "budget": "500",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:29:41.397276+00:00"
+    },
+    {
+      "id": "card-idea-3d90d8",
+      "card_type": "IdeaCard",
+      "title": "Networking Dinner",
+      "description": "An evening dinner event focused on connecting individuals from different fields to share ideas and foster collaboration.",
+      "budget": "450",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:29:41.398281+00:00"
+    },
+    {
+      "id": "card-idea-ab642b",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Series",
+      "description": "A series of interactive workshops where participants can unleash their creativity through various art forms. This could include painting, sculpture, or digital art sessions, tailored to engage everyone regardless of skill level.",
+      "budget": "541",
+      "time": "Weekend",
+      "created_at": "2025-05-03T11:50:13.219792+00:00"
+    },
+    {
+      "id": "card-idea-7b1a2a",
+      "card_type": "IdeaCard",
+      "title": "Community Potluck and Storytelling Night",
+      "description": "Invite community members to bring a dish to share and a story to tell. This event fosters connection and creativity through food and storytelling, creating a warm atmosphere for everyone involved.",
+      "budget": "541",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:13.220793+00:00"
+    },
+    {
+      "id": "card-idea-112771",
+      "card_type": "IdeaCard",
+      "title": "Outdoor Movie Night",
+      "description": "Set up an outdoor movie screening complete with blankets, popcorn, and refreshments. Choose a family-friendly film to create a fun atmosphere for all ages, making it a memorable community gathering.",
+      "budget": "541",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:13.220793+00:00"
+    },
+    {
+      "id": "card-idea-fc3510",
+      "card_type": "IdeaCard",
+      "title": "Interactive Feedback Forum",
+      "description": "A collaborative event where participants can share their ideas and provide feedback on ongoing projects. Activities include live polls, Q&A sessions, and brainstorming workshops.",
+      "budget": "526",
+      "time": "Day",
+      "created_at": "2025-05-03T11:50:18.483677+00:00"
+    },
+    {
+      "id": "card-idea-df154d",
+      "card_type": "IdeaCard",
+      "title": "Engagement Workshop",
+      "description": "An interactive workshop designed to gather insights and suggestions from attendees about future projects. Includes breakout sessions and interactive tools for capturing feedback.",
+      "budget": "500",
+      "time": "Day",
+      "created_at": "2025-05-03T11:50:18.484655+00:00"
+    },
+    {
+      "id": "card-idea-388168",
+      "card_type": "IdeaCard",
+      "title": "User Participation Day",
+      "description": "A day dedicated to engaging users in the planning of future initiatives through interactive activities, feedback stations, and collaborative discussions.",
+      "budget": "520",
+      "time": "Day",
+      "created_at": "2025-05-03T11:50:18.484655+00:00"
+    },
+    {
+      "id": "card-idea-671ae7",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Evening",
+      "description": "An engaging workshop where participants can explore their creativity through painting, crafting, or writing activities. Supplies will be provided to ensure everyone can create something unique.",
+      "budget": "300",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:50.528795+00:00"
+    },
+    {
+      "id": "card-idea-0be7c0",
+      "card_type": "IdeaCard",
+      "title": "Networking Dinner",
+      "description": "A networking dinner designed for professionals to connect over a shared meal, featuring guest speakers who will share insights and experiences in their fields.",
+      "budget": "400",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:50.528795+00:00"
+    },
+    {
+      "id": "card-idea-f825aa",
+      "card_type": "IdeaCard",
+      "title": "Outdoor Movie Night",
+      "description": "An outdoor movie screening featuring a popular film, complete with popcorn and drinks. A cozy and fun atmosphere for relaxation and socializing.",
+      "budget": "200",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:50.528795+00:00"
+    },
+    {
+      "id": "card-idea-bb85c2",
+      "card_type": "IdeaCard",
+      "title": "Creative Idea Workshop",
+      "description": "A collaborative workshop where participants brainstorm and develop innovative ideas while enjoying light refreshments. The session will include icebreakers and guided activities to enhance creativity.",
+      "budget": "400",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:56.721848+00:00"
+    },
+    {
+      "id": "card-idea-649f15",
+      "card_type": "IdeaCard",
+      "title": "Idea Pitch Competition",
+      "description": "Teams prepare and present their best ideas in a friendly competition. Each team will be provided with a budget for materials and refreshments. Winners receive prizes to encourage participation.",
+      "budget": "500",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:56.721848+00:00"
+    },
+    {
+      "id": "card-idea-3dc866",
+      "card_type": "IdeaCard",
+      "title": "Innovation Roundtable",
+      "description": "An interactive roundtable discussion where attendees can share their ideas and receive feedback. The event will be facilitated to ensure everyone has a chance to contribute, with snacks provided.",
+      "budget": "350",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:50:56.721848+00:00"
+    },
+    {
+      "id": "card-idea-0e8c1b",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Session",
+      "description": "An interactive workshop where participants can unleash their creativity through various art forms, fostering collaboration and innovative thinking.",
+      "budget": "180",
+      "time": "Day",
+      "created_at": "2025-05-03T11:54:20.012961+00:00"
+    },
+    {
+      "id": "card-idea-64d695",
+      "card_type": "IdeaCard",
+      "title": "Outdoor Team Challenge",
+      "description": "A series of fun outdoor activities designed to promote teamwork and problem-solving skills among participants.",
+      "budget": "250",
+      "time": "Day",
+      "created_at": "2025-05-03T11:54:20.012961+00:00"
+    },
+    {
+      "id": "card-idea-29ffa0",
+      "card_type": "IdeaCard",
+      "title": "Networking Dinner",
+      "description": "An evening dinner event where participants can network over delicious food and share ideas in a relaxed atmosphere.",
+      "budget": "250",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:54:20.012961+00:00"
+    },
+    {
+      "id": "card-idea-4e0d74",
+      "card_type": "IdeaCard",
+      "title": "Themed Idea Workshop",
+      "description": "Host a collaborative workshop where participants bring their ideas to life through interactive sessions. Each participant has a chance to present their ideas, followed by group brainstorming and feedback.",
+      "budget": "250",
+      "time": "Day",
+      "created_at": "2025-05-03T11:57:29.888414+00:00"
+    },
+    {
+      "id": "card-idea-137342",
+      "card_type": "IdeaCard",
+      "title": "Creative Networking Lunch",
+      "description": "Organize a networking lunch where attendees can share their ideas over a meal. Include icebreaker activities to encourage interaction and idea sharing.",
+      "budget": "300",
+      "time": "Day",
+      "created_at": "2025-05-03T11:57:29.888414+00:00"
+    },
+    {
+      "id": "card-idea-3c56a6",
+      "card_type": "IdeaCard",
+      "title": "Interactive Idea Pitch Contest",
+      "description": "Create an engaging pitch contest where participants present their ideas to a panel. Offer prizes for the best pitches to motivate creativity and participation.",
+      "budget": "217",
+      "time": "Day",
+      "created_at": "2025-05-03T11:57:29.888414+00:00"
+    },
+    {
+      "id": "card-idea-5e2e0b",
+      "card_type": "IdeaCard",
+      "title": "Spring Outdoor Picnic",
+      "description": "An enjoyable spring picnic in the park featuring light snacks, games, and a relaxing atmosphere for attendees to connect and unwind.",
+      "budget": "67",
+      "time": "Day",
+      "created_at": "2025-05-03T11:59:09.841274+00:00"
+    },
+    {
+      "id": "card-idea-5ff418",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Session",
+      "description": "A hands-on workshop where participants can engage in creative activities like painting or crafting, allowing for self-expression and collaboration.",
+      "budget": "67",
+      "time": "Day",
+      "created_at": "2025-05-03T11:59:09.841274+00:00"
+    },
+    {
+      "id": "card-idea-ec5d91",
+      "card_type": "IdeaCard",
+      "title": "Themed Movie Night",
+      "description": "An evening movie night under the stars with a selected theme, including popcorn and refreshments for a cozy atmosphere.",
+      "budget": "67",
+      "time": "Evening",
+      "created_at": "2025-05-03T11:59:09.841274+00:00"
+    },
+    {
+      "id": "card-idea-93e75d",
+      "card_type": "IdeaCard",
+      "title": "Creative Workshop Day",
+      "description": "A day dedicated to brainstorming and developing innovative ideas within teams. Participants will engage in various activities to spark creativity and collaboration.",
+      "budget": "67",
+      "time": "Day",
+      "created_at": "2025-05-03T11:59:14.974347+00:00"
+    },
+    {
+      "id": "card-idea-00aea8",
+      "card_type": "IdeaCard",
+      "title": "Idea Pitch Session",
+      "description": "Teams prepare and present their ideas in a friendly competition format. The best ideas will receive recognition and potential funding for further development.",
+      "budget": "67",
+      "time": "Day",
+      "created_at": "2025-05-03T11:59:14.974347+00:00"
+    },
+    {
+      "id": "card-idea-e076e8",
+      "card_type": "IdeaCard",
+      "title": "Team Feedback Roundtable",
+      "description": "An open discussion where team members can share feedback on ongoing projects and suggest improvements or new ideas in a supportive environment.",
+      "budget": "67",
+      "time": "Day",
+      "created_at": "2025-05-03T11:59:14.974347+00:00"
+    }
+  ],
+  "out_timeline": []
+}

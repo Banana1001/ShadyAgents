@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
-from test import run_combine_workflow
+from test1 import run_combine_workflow, combine_json_with_timeline
 
 app = FastAPI()
 
@@ -67,6 +67,7 @@ def generate_ideas(n=5):
 
 @app.post("/generate-plan")
 async def generate_plan(request: GeneratePlanPayload):
+    result = combine_json_with_timeline(request.Card['id'])
     # result = run_combine_workflow(request.Card, request.CardList)
     # print(f"Result: {result}")
     result = generate_ideas(5)  # Generate 5 random ideas for demonstration
@@ -77,7 +78,7 @@ async def generate_plan(request: GeneratePlanPayload):
 async def combine_cards(request: CombineCardPayload):
     card1 = request.Card1
     card2 = request.Card2
-    result = run_combine_workflow(card1, card2)
+    result = run_combine_workflow([card1], [card2])
     print(f"Result: {result}")
 
     return {'cards': [{'type': 'combine', 'content': f'idea {random.randint(1, 100)}', 'time': datetime.datetime.now().isoformat(), 'cost': random.randint(1, 1000)}]}

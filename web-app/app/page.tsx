@@ -221,6 +221,7 @@ export default function Home() {
       },
       Card2: {
         id: '',
+        card_type: 'CustomCard',
         user_query: card2.content,
       }
     };
@@ -318,6 +319,7 @@ export default function Home() {
           },
           Card2: {
             id: card2.id,
+            card_type: 'CustomCard',
             user_query: card2.content,
           }
         };
@@ -394,6 +396,7 @@ export default function Home() {
           Card: {
             id: dragged.id,
             user_query: dragged.content,
+            card_type: 'CustomCard',
             time: dragged.time || '',
             budget: dragged.cost || '',
           },
