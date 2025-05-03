@@ -17,26 +17,7 @@ llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0.7)
 # Load and Parse JSON
 def load_transactions(file_path: str):
     with open(file_path, "r") as f:
-        raw = json.load(f)
-
-    transactions = []
-    for entry in raw:
-        if "FromSugarDaddy" in entry:
-            source = "income"
-            amount = entry["FromSugarDaddy"]["amount"]
-            desc = entry["FromSugarDaddy"]["description"]
-        elif "ToPurchasePerson" in entry:
-            source = "expense"
-            amount = entry["ToPurchasePerson"]["amount"]
-            desc = entry["ToPurchasePerson"]["description"]
-        else:
-            continue
-
-        transactions.append({
-            "type": source,
-            "amount": amount,
-            "description": desc
-        })
+        transactions = json.load(f)
     return transactions
 
 # idea system prompt
