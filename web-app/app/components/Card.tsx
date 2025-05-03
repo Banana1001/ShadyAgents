@@ -1,6 +1,7 @@
 export type CardProps = {
-    type: 'action' | 'idea' | 'generated';
+    type: 'action' | 'idea' | 'combine';
     content: string;
+    time?: string;
 };
 
 export default function Card({ type, content }: CardProps) {

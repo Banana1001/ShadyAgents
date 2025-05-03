@@ -15,12 +15,12 @@ interface TimelineEvent {
   id: string;
   position: number; // 0 to 1 representing position on timeline
   content: string;
-  type: 'action' | 'idea' | 'generated';
+  type: 'action' | 'idea' | 'combine';
   placement: 'above' | 'below';
   cards?: Array<{
     id: string;
     content: string;
-    type: 'action' | 'idea' | 'generated';
+    type: 'action' | 'idea' | 'combine';
   }>;
 }
 
@@ -30,7 +30,7 @@ interface TimelineProps {
   events?: TimelineEvent[];
   leftMargin?: number;
   rightMargin?: number;
-  onEventDrop?: (eventId: string, card: { type: 'action' | 'idea' | 'generated', content: string }) => void;
+  onEventDrop?: (eventId: string, card: { type: 'action' | 'idea' | 'combine', content: string }) => void;
 }
 
 export default function Timeline({ 
@@ -69,13 +69,13 @@ export default function Timeline({
     });
   };
 
-  const getEventTypeColor = (type: 'action' | 'idea' | 'generated') => {
+  const getEventTypeColor = (type: 'action' | 'idea' | 'combine') => {
     switch (type) {
       case 'action':
         return 'bg-blue-500';
       case 'idea':
         return 'bg-purple-500';
-      case 'generated':
+      case 'combine':
         return 'bg-green-500';
       default:
         return 'bg-gray-500';

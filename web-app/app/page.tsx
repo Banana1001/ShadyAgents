@@ -33,12 +33,12 @@ interface TimelineEvent {
   id: string;
   position: number;
   content: string;
-  type: 'action' | 'idea' | 'generated';
+  type: 'action' | 'idea' | 'combine';
   placement: 'above' | 'below';
   cards: Array<{
     id: string;
     content: string;
-    type: 'action' | 'idea' | 'generated';
+    type: 'action' | 'idea' | 'combine';
   }>;
 }
 
@@ -250,7 +250,7 @@ export default function Home() {
 
     const newCard: CardProps = {
       type: 'action',
-      content: messageToSend
+      content: messageToSend,
     };
 
     // Update cards for the selected project
@@ -261,19 +261,6 @@ export default function Home() {
           : project
       )
     );
-  };
-
-  // Fake agent for demo purposes
-  const fakeAgentCall = async (msg: string): Promise<CardProps[]> => {
-    return new Promise((res) =>
-      setTimeout(() => {
-        res([
-          { type: 'action', content: `Response to "${msg}"` },
-          { type: 'action', content: `Another response to "${msg}"` },
-          { type: 'action', content: `Yet another response to "${msg}"` },
-        ]);
-      }, 1000
-    ));
   };
 
   // Fake server call of generating a plan for demo purposes
@@ -339,15 +326,37 @@ export default function Home() {
     const project = projects.find(p => p.id === selectedProject);
     if (!project) return { ticks: [] };
 
-    if (project.timelineType === 'custom' && project.customTicks) {
-      return { ticks: project.customTicks };
+    // Filter cards that have a valid time (type = 'idea' or 'combine')
+    const cardsWithTime = [...project.cards, ...project.placedCards].filter(
+      card => (card.type === 'idea' || card.type === 'combine') && card.time
+    );
+
+    if (cardsWithTime.length < 2) return { ticks: [] };
+
+    const times = cardsWithTime.map(card => new Date(card.time!).getTime());
+    const minTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+
+    if (minTime === maxTime) {
+      return {
+        ticks: [
+          { position: 0, label: new Date(minTime).toLocaleString(), isMajor: true },
+          { position: 1, label: new Date(maxTime).toLocaleString(), isMajor: true },
+        ]
+      };
     }
 
-    if (project.timelineType in timelineConfigs) {
-      return timelineConfigs[project.timelineType as keyof typeof timelineConfigs];
-    }
+    const numTicks = 5;
+    const ticks = Array.from({ length: numTicks }, (_, i) => {
+      const time = minTime + ((maxTime - minTime) * i) / (numTicks - 1);
+      return {
+        position: i / (numTicks - 1),
+        label: new Date(time).toLocaleTimeString(),
+        isMajor: i === 0 || i === numTicks - 1,
+      };
+    });
 
-    return { ticks: [] };
+    return { ticks };
   };
 
   const handleDragStart = (card: CardProps) => {
@@ -393,7 +402,7 @@ export default function Home() {
     }
   };
 
-  const handleEventDrop = (eventId: string, card: { type: 'action' | 'idea' | 'generated', content: string }) => {
+  const handleEventDrop = (eventId: string, card: { type: 'action' | 'idea' | 'combine', content: string }) => {
     if (!selectedProject) return;
 
     setProjects(prevProjects => 
@@ -435,7 +444,7 @@ export default function Home() {
 
       if (existingEvent) {
         // Get new action cards from the agent
-        const newCards = await fakeCombineCard(`Card placed on timeline event: ${cardContent}`);
+        const newCards = await fakeCombineCard(`Card placed on idea event: ${cardContent}`);
         
         // Update the existing event while preserving its cards
         setProjects(prevProjects => 
@@ -448,11 +457,11 @@ export default function Home() {
                       ? {
                           ...existingEvent,
                           content: cardContent,
-                          type: draggedCard?.type || 'action'
+                          type: draggedCard?.type || 'combine',
                         }
                       : event
                   ),
-                  cards: newCards,
+                cards: [...project.cards, ...newCards],
                   placedCards: project.placedCards.filter(card => card.id !== draggedPlacedCardId)
                 }
               : project
@@ -788,7 +797,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col">
               {/* Top canvas area */}
               <div 
-                className="flex-1 bg-white border-b border-gray-200 shadow-inner relative"
+                className="flex-1 bg-white border-gray-200 shadow-inner relative"
                 onDragOver={handleDragOver}
                 onDrop={(e) => isDraggingPlacedCard ? handlePlacedCardDrop(e, 'top') : handleDrop(e, 'top')}
               >
@@ -816,7 +825,7 @@ export default function Home() {
 
               {/* Timeline axis with drop zone */}
               <div 
-                className="relative"
+                className="relative mx-6 rounded-md border border-gray-300"
                 onDragOver={handleDragOver}
                 onDrop={handleAxisDrop}
               >
@@ -832,7 +841,7 @@ export default function Home() {
 
               {/* Bottom canvas area */}
               <div
-                className="flex-1 bg-white border-t border-gray-200 shadow-inner relative"
+                className="flex-1 bg-white border-gray-200 shadow-inner relative"
                 onDragOver={handleDragOver}
                 onDrop={(e) => isDraggingPlacedCard ? handlePlacedCardDrop(e, 'bottom') : handleDrop(e, 'bottom')}
               >

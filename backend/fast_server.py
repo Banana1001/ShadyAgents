@@ -19,13 +19,36 @@ app.add_middleware(
 class MessageRequest(BaseModel):
     message: str
 
+
+def generate_random_time(range_type: str) -> datetime.datetime:
+    now = datetime.datetime.now()
+
+    if range_type == "year":
+        start = now - datetime.timedelta(days=365)
+        end = now
+    elif range_type == "month":
+        start = now - datetime.timedelta(days=30)
+        end = now
+    elif range_type == "day":
+        start = now - datetime.timedelta(days=1)
+        end = now
+    else:
+        raise ValueError("Invalid range_type")
+
+    # Generate random datetime between start and end
+    delta = end - start
+    random_seconds = random.randint(0, int(delta.total_seconds()))
+    return start + datetime.timedelta(seconds=random_seconds)
+
 def generate_ideas(n=5):
     ideas = []
     for _ in range(n):
+        range_type = random.choice(["year", "month", "day"])
+        random_time = generate_random_time(range_type)
         idea = {
             'type': 'idea',
             'content': f'idea {random.randint(1, 100)}',
-            'time': datetime.datetime.now().isoformat()
+            'time': random_time.isoformat()
         }
         ideas.append(idea)
     return ideas
