@@ -105,14 +105,14 @@ export default function Home() {
     return (data.cards);
   };
 
-  // Fake server call of combining cards for demo purposes
-  const fakeCombineCard = async(msg: string) => {
+  // server call of combining cards for demo purposes
+  const combineTwoCards = async(input: any) => {
     const res = await fetch('http://localhost:8000/combine-cards', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message: msg }),
+      body: JSON.stringify(input),
     });
 
     const data = await res.json();
@@ -208,8 +208,23 @@ export default function Home() {
     const currentProject = projects.find(p => p.id === selectedProject);
     if (!currentProject) return;
 
+    const event = currentProject.timelineEvents.find(c => c.id === eventId);
+    const card1 = event?.cards[0];
+    const card2 = card;
+    const inputPayload = {
+      Card1: {
+        id: card1?.id || '',
+        description: card1?.content || '',
+        budget: card1?.cost || '',
+        time: card1?.time || '',
+      },
+      Card2: {
+        id: '',
+        user_query: card2.content,
+      }
+    };
     // Get new action cards from the agent
-    const newCards = await fakeCombineCard(`Combine ${currentProject.timelineEvents.find(e => e.id === eventId)?.content} and ${card.content}`);
+    const newCards = await combineTwoCards(inputPayload);
     
     const returnedCard = newCards[0];
 
@@ -290,7 +305,21 @@ export default function Home() {
 
       if (existingEvent) {
         // Get new action cards from the agent
-        const newCards = await fakeCombineCard(`Combine ${existingEvent.cards[0].id} and ${dragged.id}`);
+        const card1 = existingEvent.cards[0];
+        const card2 = dragged;
+        const inputPayload = {
+          Card1: {
+            id: card1.id,
+            description: card1?.content || '',
+            budget: card1?.cost || '',
+            time: card1?.time || '',
+          },
+          Card2: {
+            id: card2.id,
+            user_query: card2.content,
+          }
+        };
+        const newCards = await combineTwoCards(inputPayload);
         
         const returnedCard = newCards[0];
 
